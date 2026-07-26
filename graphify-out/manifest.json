@@ -1,0 +1,102 @@
+{
+  ".vscode/extensions.json": {
+    "mtime": 1785103107.9516108,
+    "ast_hash": "d1846e92ceedfa6eb08a69cbb38c190a",
+    "semantic_hash": "d1846e92ceedfa6eb08a69cbb38c190a"
+  },
+  "package.json": {
+    "mtime": 1785103834.2002606,
+    "ast_hash": "0cd84fbfde3dea94fe371d76a5eaa88d",
+    "semantic_hash": "0cd84fbfde3dea94fe371d76a5eaa88d"
+  },
+  "src-tauri/build.rs": {
+    "mtime": 1785103107.941694,
+    "ast_hash": "667702979da61fdc96948886b7cd7a33",
+    "semantic_hash": "667702979da61fdc96948886b7cd7a33"
+  },
+  "src-tauri/capabilities/default.json": {
+    "mtime": 1785103834.256262,
+    "ast_hash": "5cd5d31b891c9196034942bdf1bf9a78",
+    "semantic_hash": "5cd5d31b891c9196034942bdf1bf9a78"
+  },
+  "src-tauri/src/cpu/ee.rs": {
+    "mtime": 1785105508.383373,
+    "ast_hash": "cb7de86e8bc8678a7006f4112acf45eb",
+    "semantic_hash": "cb7de86e8bc8678a7006f4112acf45eb"
+  },
+  "src-tauri/src/cpu/instruction.rs": {
+    "mtime": 1785105413.7634468,
+    "ast_hash": "5ea929ff09d723d621549dd09034b9d0",
+    "semantic_hash": "5ea929ff09d723d621549dd09034b9d0"
+  },
+  "src-tauri/src/cpu/mod.rs": {
+    "mtime": 1785104010.712256,
+    "ast_hash": "51c42031d4e07afdd9fd87d728d38ca0",
+    "semantic_hash": "51c42031d4e07afdd9fd87d728d38ca0"
+  },
+  "src-tauri/src/hw/mod.rs": {
+    "mtime": 1785105036.9105089,
+    "ast_hash": "ba3e8b192fea66711c11aabf0c2c5ea1",
+    "semantic_hash": "ba3e8b192fea66711c11aabf0c2c5ea1"
+  },
+  "src-tauri/src/lib.rs": {
+    "mtime": 1785105045.1660926,
+    "ast_hash": "f545caafa339fe1999a8185a2a3cecce",
+    "semantic_hash": "f545caafa339fe1999a8185a2a3cecce"
+  },
+  "src-tauri/src/main.rs": {
+    "mtime": 1785103107.9516108,
+    "ast_hash": "48f9e28ce3ddfea02bcab726121682a4",
+    "semantic_hash": "48f9e28ce3ddfea02bcab726121682a4"
+  },
+  "src-tauri/src/memory/bus.rs": {
+    "mtime": 1785105134.7300522,
+    "ast_hash": "152d951256d3c540ea3e8ba0adf3f65c",
+    "semantic_hash": "152d951256d3c540ea3e8ba0adf3f65c"
+  },
+  "src-tauri/src/memory/mod.rs": {
+    "mtime": 1785103761.1914206,
+    "ast_hash": "1faf38d6cd6cdfbc02add897fb5e63d5",
+    "semantic_hash": "1faf38d6cd6cdfbc02add897fb5e63d5"
+  },
+  "src-tauri/tauri.conf.json": {
+    "mtime": 1785103107.9384553,
+    "ast_hash": "3caf2812bf6a2eef24cecb7ebbdc05c0",
+    "semantic_hash": "3caf2812bf6a2eef24cecb7ebbdc05c0"
+  },
+  "src-tauri/trace.rs": {
+    "mtime": 1785105287.009487,
+    "ast_hash": "b74d48364e395294a928688bbebba09b",
+    "semantic_hash": "b74d48364e395294a928688bbebba09b"
+  },
+  "src/App.tsx": {
+    "mtime": 1785104714.906677,
+    "ast_hash": "8c37de06ef2428426515f362fb8824e9",
+    "semantic_hash": "8c37de06ef2428426515f362fb8824e9"
+  },
+  "src/main.tsx": {
+    "mtime": 1785103107.954778,
+    "ast_hash": "ea7bebc824e5f67b3b9aef34cb4f9491",
+    "semantic_hash": "ea7bebc824e5f67b3b9aef34cb4f9491"
+  },
+  "src/vite-env.d.ts": {
+    "mtime": 1785103107.956709,
+    "ast_hash": "8f68c27c3fc38817b2726b20e2d4f1ee",
+    "semantic_hash": "8f68c27c3fc38817b2726b20e2d4f1ee"
+  },
+  "tsconfig.json": {
+    "mtime": 1785103107.956709,
+    "ast_hash": "7a931cf665b999dd157ba517f5cbd820",
+    "semantic_hash": "7a931cf665b999dd157ba517f5cbd820"
+  },
+  "tsconfig.node.json": {
+    "mtime": 1785103107.956709,
+    "ast_hash": "281e378713152cccc7860c818db55849",
+    "semantic_hash": "281e378713152cccc7860c818db55849"
+  },
+  "vite.config.ts": {
+    "mtime": 1785103184.3823543,
+    "ast_hash": "074e6a94278558f70d72b4a5a0aff705",
+    "semantic_hash": "074e6a94278558f70d72b4a5a0aff705"
+  }
+}
