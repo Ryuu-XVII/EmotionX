@@ -1,6 +1,7 @@
 pub mod cpu;
 pub mod memory;
 pub mod hw;
+pub mod elf_loader;
 
 use cpu::ee::EmotionEngine;
 use memory::bus::Bus;
@@ -86,6 +87,31 @@ fn run_cpu_batch(steps: u32, app: tauri::AppHandle, state: State<'_, EmulatorSta
     }
 }
 
+#[tauri::command]
+fn load_elf(path: String, state: State<'_, EmulatorState>) -> Result<String, String> {
+    let mut engine = state.engine.lock().unwrap();
+    
+    // Auto-boot if not already running
+    if engine.is_none() {
+        let bus = Bus::new();
+        let mut ee = EmotionEngine::new(bus);
+        ee.step();
+        *engine = Some(ee);
+    }
+    
+    if let Some(ee) = engine.as_mut() {
+        match elf_loader::load_elf(&path, ee) {
+            Ok(entry) => {
+                ee.set_pc(entry);
+                Ok(format!("Successfully loaded ELF and set PC to {:#010X}", entry))
+            },
+            Err(e) => Err(e),
+        }
+    } else {
+        Err("Failed to auto-initialize emulator.".into())
+    }
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -94,7 +120,7 @@ pub fn run() {
             engine: Mutex::new(None),
         })
         .plugin(tauri_plugin_opener::init())
-        .invoke_handler(tauri::generate_handler![get_status, boot_game, step_cpu, run_cpu_batch])
+        .invoke_handler(tauri::generate_handler![get_status, boot_game, step_cpu, run_cpu_batch, load_elf])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

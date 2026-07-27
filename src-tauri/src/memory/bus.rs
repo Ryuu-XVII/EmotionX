@@ -79,6 +79,24 @@ impl Bus {
         }
     }
 
+    pub fn read128(&mut self, addr: u32) -> u128 {
+        // 128-bit reads are only expected from RAM (or maybe some HW). 
+        // Addresses must be 16-byte aligned, but we just read 16 bytes.
+        let phys_addr = addr & 0x1FFFFFFF;
+        if phys_addr < (MAIN_MEMORY_SIZE as u32) {
+            let offset = phys_addr as usize;
+            if offset + 15 < MAIN_MEMORY_SIZE {
+                let mut buf = [0u8; 16];
+                buf.copy_from_slice(&self.ram[offset..offset+16]);
+                u128::from_le_bytes(buf)
+            } else {
+                0
+            }
+        } else {
+            0
+        }
+    }
+
     pub fn write32(&mut self, addr: u32, val: u32) {
         let phys_addr = addr & 0x1FFFFFFF;
         
@@ -125,5 +143,32 @@ impl Bus {
         } else if phys_addr >= 0x10000000 && phys_addr < 0x10010000 {
             self.hw.write8(phys_addr, val);
         }
+    }
+
+    pub fn write128(&mut self, addr: u32, val: u128) {
+        let phys_addr = addr & 0x1FFFFFFF;
+        if phys_addr < (MAIN_MEMORY_SIZE as u32) {
+            let offset = phys_addr as usize;
+            if offset + 15 < MAIN_MEMORY_SIZE {
+                let bytes = val.to_le_bytes();
+                self.ram[offset..offset+16].copy_from_slice(&bytes);
+            }
+        } else if phys_addr >= 0x10000000 && phys_addr < 0x10010000 {
+            // Ignored for now or handled if DMA
+        }
+    }
+
+    /// Reads a null-terminated string from memory starting at the given address.
+    pub fn read_string(&mut self, mut addr: u32) -> String {
+        let mut result = String::new();
+        loop {
+            let b = self.read8(addr);
+            if b == 0 {
+                break;
+            }
+            result.push(b as char);
+            addr = addr.wrapping_add(1);
+        }
+        result
     }
 }

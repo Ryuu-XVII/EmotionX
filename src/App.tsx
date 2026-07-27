@@ -91,6 +91,26 @@ export default function App() {
     }
   };
 
+  const handleLoadELF = async () => {
+    try {
+      const selected = await open({
+        multiple: false,
+        filters: [{
+          name: 'PlayStation 2 Executable',
+          extensions: ['elf']
+        }]
+      });
+      
+      if (selected) {
+        addLog(`Loading ELF from: ${selected}`);
+        const result = await invoke<string>('load_elf', { path: selected });
+        addLog(`Engine: ${result}`);
+      }
+    } catch (e) {
+      addLog(`Error: ${e}`);
+    }
+  };
+
   const handleOverrideBIOS = async () => {
     try {
       const selected = await open({
@@ -209,6 +229,13 @@ export default function App() {
                     >
                       <Disc className="w-4 h-4" />
                       Boot Custom ISO
+                    </button>
+                    <button 
+                      onClick={handleLoadELF}
+                      className="flex items-center gap-2 px-4 py-2 bg-blue-600/20 hover:bg-blue-600/40 text-blue-400 border border-blue-500/30 rounded-lg text-sm font-medium transition-colors"
+                    >
+                      <Disc className="w-4 h-4" />
+                      Open ELF
                     </button>
                   </div>
                 </div>

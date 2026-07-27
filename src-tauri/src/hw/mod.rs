@@ -17,6 +17,14 @@ impl Hardware {
         }
     }
 
+    pub fn trigger_irq(&mut self, irq: u32) {
+        self.intc_stat |= 1 << irq;
+    }
+
+    pub fn check_interrupts(&self) -> bool {
+        (self.intc_stat & self.intc_mask) != 0
+    }
+
     pub fn read32(&mut self, addr: u32) -> u32 {
         match addr {
             // INTC_STAT
