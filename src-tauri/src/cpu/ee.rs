@@ -129,6 +129,33 @@ impl EmotionEngine {
                         self.next_pc = self.get_reg(rs) as u32;
                         self.branch = true;
                     },
+                    0b100100 => {
+                        // AND rd, rs, rt
+                        let rd = instr.rd();
+                        let rs = instr.rs();
+                        let rt = instr.rt();
+                        log.push_str(&format!("AND $t{}, $t{}, $t{}", rd, rs, rt));
+                        let val = self.get_reg(rs) & self.get_reg(rt);
+                        self.set_reg(rd, val);
+                    },
+                    0b100001 => {
+                        // ADDU rd, rs, rt
+                        let rd = instr.rd();
+                        let rs = instr.rs();
+                        let rt = instr.rt();
+                        log.push_str(&format!("ADDU $t{}, $t{}, $t{}", rd, rs, rt));
+                        let val = self.get_reg(rs).wrapping_add(self.get_reg(rt));
+                        self.set_reg(rd, val);
+                    },
+                    0b101011 => {
+                        // SLTU rd, rs, rt
+                        let rd = instr.rd();
+                        let rs = instr.rs();
+                        let rt = instr.rt();
+                        log.push_str(&format!("SLTU $t{}, $t{}, $t{}", rd, rs, rt));
+                        let val = if self.get_reg(rs) < self.get_reg(rt) { 1 } else { 0 };
+                        self.set_reg(rd, val);
+                    },
                     _ => {
                         log.push_str(&format!("UNKNOWN SPECIAL: {:#08b}", funct));
                     }
@@ -214,14 +241,12 @@ impl EmotionEngine {
             },
             0b101011 => {
                 // SW rt, offset(rs)
-                let rt = instr.rt();
                 let rs = instr.rs();
+                let rt = instr.rt();
                 let offset = instr.imm_sign_extended();
-                let addr = (self.get_reg(rs) as u32).wrapping_add(offset as u32);
-                log.push_str(&format!("SW $t{}, {:#06X}($t{})", rt, offset, rs));
-                
-                let val = self.get_reg(rt) as u32;
-                self.bus.write32(addr, val);
+                let addr = self.get_reg(rs).wrapping_add(offset as u64) as u32;
+                self.bus.write32(addr, self.get_reg(rt) as u32);
+                log.push_str(&format!("SW $t{}, {:#06X}($t{}) [ADDR: {:#010X}]", rt, offset as u16, rs, addr));
             },
             0b100000 => {
                 // LB rt, offset(rs)
@@ -236,14 +261,39 @@ impl EmotionEngine {
             },
             0b101000 => {
                 // SB rt, offset(rs)
+                let rs = instr.rs();
+                let rt = instr.rt();
+                let offset = instr.imm_sign_extended();
+                let addr = self.get_reg(rs).wrapping_add(offset as u64) as u32;
+                self.bus.write8(addr, (self.get_reg(rt) & 0xFF) as u8);
+                log.push_str(&format!("SB $t{}, {:#06X}($t{}) [ADDR: {:#010X}]", rt, offset as u16, rs, addr));
+            },
+            0b100101 => {
+                // LHU rt, offset(rs)
                 let rt = instr.rt();
                 let rs = instr.rs();
                 let offset = instr.imm_sign_extended();
                 let addr = (self.get_reg(rs) as u32).wrapping_add(offset as u32);
-                log.push_str(&format!("SB $t{}, {:#06X}($t{})", rt, offset, rs));
+                log.push_str(&format!("LHU $t{}, {:#06X}($t{})", rt, offset, rs));
                 
-                let val = self.get_reg(rt) as u8;
-                self.bus.write8(addr, val);
+                let val = self.bus.read16(addr) as u64; // Zero extend
+                self.set_reg(rt, val);
+            },
+            0b100100 => {
+                // LBU rt, offset(rs)
+                let rt = instr.rt();
+                let rs = instr.rs();
+                let offset = instr.imm_sign_extended();
+                let addr = (self.get_reg(rs) as u32).wrapping_add(offset as u32);
+                log.push_str(&format!("LBU $t{}, {:#06X}($t{})", rt, offset, rs));
+                
+                let val = self.bus.read8(addr) as u64; // Zero extend
+                self.set_reg(rt, val);
+            },
+            0b101111 => {
+                // CACHE op, offset(base)
+                log.push_str("CACHE");
+                // No-op in emulator
             },
             0b100001 => {
                 // LH rt, offset(rs)
@@ -258,14 +308,12 @@ impl EmotionEngine {
             },
             0b101001 => {
                 // SH rt, offset(rs)
-                let rt = instr.rt();
                 let rs = instr.rs();
+                let rt = instr.rt();
                 let offset = instr.imm_sign_extended();
-                let addr = (self.get_reg(rs) as u32).wrapping_add(offset as u32);
-                log.push_str(&format!("SH $t{}, {:#06X}($t{})", rt, offset, rs));
-                
-                let val = self.get_reg(rt) as u16;
-                self.bus.write16(addr, val);
+                let addr = self.get_reg(rs).wrapping_add(offset as u64) as u32;
+                self.bus.write16(addr, (self.get_reg(rt) & 0xFFFF) as u16);
+                log.push_str(&format!("SH $t{}, {:#06X}($t{}) [ADDR: {:#010X}]", rt, offset as u16, rs, addr));
             },
             0b000010 => {
                 // J target

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Gamepad2, Settings, Disc, Play, Cpu, Monitor, Volume2, CpuIcon } from 'lucide-react';
 import { invoke } from '@tauri-apps/api/core';
+import { listen } from '@tauri-apps/api/event';
 import { open } from '@tauri-apps/plugin-dialog';
 import './App.css';
 
@@ -39,13 +40,23 @@ export default function App() {
     return () => clearInterval(interval);
   }, []);
 
+  // Listen for SIO Logs
+  useEffect(() => {
+    const unlisten = listen<string>('sio-log', (event) => {
+      setLogs(prev => [`[SIO] ${event.payload}`, ...prev].slice(0, 100));
+    });
+    return () => {
+      unlisten.then(f => f());
+    };
+  }, []);
+
   // Continuous execution loop
   useEffect(() => {
     let interval: ReturnType<typeof setInterval>;
     if (isRunning) {
       interval = setInterval(async () => {
         try {
-          const result = await invoke<string[]>('run_cpu_batch', { steps: 20 });
+          const result = await invoke<string[]>('run_cpu_batch', { steps: 50000 });
           setLogs(prev => [...result.reverse(), ...prev].slice(0, 100));
         } catch (e) {
           console.error(e);
@@ -309,7 +320,7 @@ export default function App() {
           ) : (
             <div className="space-y-1">
               {logs.map((log, i) => (
-                <div key={i} className="text-slate-300"><span className="text-slate-500 mr-2">{`>`}</span>{log}</div>
+                <div key={i} className={log.startsWith('[SIO]') ? "text-green-400" : "text-slate-300"}><span className="text-slate-500 mr-2">{`>`}</span>{log}</div>
               ))}
             </div>
           )}

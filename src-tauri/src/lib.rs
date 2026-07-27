@@ -5,7 +5,7 @@ pub mod hw;
 use cpu::ee::EmotionEngine;
 use memory::bus::Bus;
 use std::sync::Mutex;
-use tauri::State;
+use tauri::{State, Emitter};
 
 struct EmulatorState {
     engine: Mutex<Option<EmotionEngine>>,
@@ -38,24 +38,49 @@ fn boot_game(path: &str, state: State<'_, EmulatorState>) -> String {
 }
 
 #[tauri::command]
-fn step_cpu(state: State<'_, EmulatorState>) -> Result<String, String> {
+fn step_cpu(app: tauri::AppHandle, state: State<'_, EmulatorState>) -> Result<String, String> {
     let mut engine = state.engine.lock().unwrap();
     if let Some(ee) = engine.as_mut() {
-        Ok(ee.step())
+        let log = ee.step();
+        let pending = std::mem::take(&mut ee.bus.hw.sio.pending_lines);
+        for line in pending {
+            app.emit("sio-log", line).unwrap_or(());
+        }
+        Ok(log)
     } else {
         Err("Emulator not running. Boot a game first.".into())
     }
 }
 
 #[tauri::command]
-fn run_cpu_batch(steps: u32, state: State<'_, EmulatorState>) -> Result<Vec<String>, String> {
+fn run_cpu_batch(steps: u32, app: tauri::AppHandle, state: State<'_, EmulatorState>) -> Result<Vec<String>, String> {
     let mut engine = state.engine.lock().unwrap();
     if let Some(ee) = engine.as_mut() {
-        let mut logs = Vec::new();
-        for _ in 0..steps {
-            logs.push(ee.step());
+        let mut last_logs = Vec::new();
+        let mut full_trace = String::with_capacity((steps * 64) as usize);
+        
+        for i in 0..steps {
+            let log = ee.step();
+            full_trace.push_str(&log);
+            full_trace.push('\n');
+            
+            // Only keep the last 20 logs to avoid sending massive arrays over IPC
+            if i >= steps.saturating_sub(20) {
+                last_logs.push(log);
+            }
         }
-        Ok(logs)
+        
+        // Write trace to system temp directory to avoid both Tauri and Vite watcher rebuild loops
+        if let Ok(mut file) = std::fs::OpenOptions::new().create(true).append(true).open(std::env::temp_dir().join("emotionx_trace.txt")) {
+            use std::io::Write;
+            let _ = file.write_all(full_trace.as_bytes());
+        }
+
+        let pending = std::mem::take(&mut ee.bus.hw.sio.pending_lines);
+        for line in pending {
+            app.emit("sio-log", line).unwrap_or(());
+        }
+        Ok(last_logs)
     } else {
         Err("Emulator not running. Boot a game first.".into())
     }
