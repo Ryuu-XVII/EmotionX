@@ -20,13 +20,16 @@ EmotionX is an experimental PlayStation 2 emulator featuring a custom-built Rust
 - **Modern UI**: A sleek, dark-themed React UI with real-time logging, telemetry, and debugging tools.
 - **Modular Architecture**: Clean separation of CPU (EE, COP0), Memory (Bus, RAM, BIOS), and Hardware (SIO, Timers).
 
-## 🚀 Progress & Current Status (Phase 6)
-We are currently actively developing the core execution loop and boot sequence of the Emotion Engine. 
+## 🚀 Progress & Current Status (Phase 9)
+We are currently actively developing the core execution loop, boot sequence, and homebrew loading support of the Emotion Engine. 
 - [x] **Phase 1-3**: Project setup, React/Tauri scaffolding, and basic IPC communication.
 - [x] **Phase 4**: Implementation of the MIPS instruction decoder and basic CPU registers.
 - [x] **Phase 5**: Basic memory bus (32MB RAM, 4MB BIOS mapping), memory-mapped IO setup.
-- [x] **Phase 6**: BIOS boot sequence debugging! The CPU can now read the BIOS, decompress the Exception Handlers via `LHU`/`LBU` memory reads, and map the TLB refill vectors!
-- [ ] **Phase 7**: Hardware Initialization & Coprocessor 0 (COP0) implementation.
+- [x] **Phase 6**: BIOS boot sequence debugging, memory opcodes, and control flow branching.
+- [x] **Phase 7**: Hardware Interrupts & COP0 integration (INTC registers, VBlank timer).
+- [x] **Phase 8**: Basic ELF Loader (loading `.elf` segments into RAM and executing them).
+- [x] **Phase 9**: BIOS High-Level Emulation (HLE) & Syscall Interception (`Putc`, `Puts`).
+- [ ] **Phase 10**: TBD
 
 ## 🛠️ Getting Started
 
