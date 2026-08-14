@@ -1,11 +1,18 @@
 pub mod sio;
+pub mod dmac;
+pub mod gs;
 
 pub struct Hardware {
     // Basic stubs for hardware registers
-    // e.g., INTC (Interrupt Controller), DMAC (DMA Controller), Timers
+    // e.g., INTC (Interrupt Controller), Timers
     pub intc_stat: u32,
     pub intc_mask: u32,
     pub sio: sio::Sio,
+    pub dmac: dmac::Dmac,
+    pub gs: gs::Gs,
+    // Set by Dmac::write_reg when a channel's STR bit is newly set; the Bus
+    // (which owns both RAM and the GS) drains this to perform the transfer.
+    pub pending_dma_kick: Option<usize>,
 }
 
 impl Hardware {
@@ -14,6 +21,9 @@ impl Hardware {
             intc_stat: 0,
             intc_mask: 0,
             sio: sio::Sio::new(),
+            dmac: dmac::Dmac::new(),
+            gs: gs::Gs::new(),
+            pending_dma_kick: None,
         }
     }
 
@@ -33,6 +43,7 @@ impl Hardware {
             0x10000010 => self.intc_mask,
             // SIO
             0x1000F100..=0x1000F200 => self.sio.read32(addr),
+            _ if dmac::Dmac::is_dmac_addr(addr) => self.dmac.read_reg(addr),
             // Default HW read
             _ => {
                 // If it's reading a status register, often returning 0 or 1 is enough to break a wait loop
@@ -56,6 +67,11 @@ impl Hardware {
             // SIO
             0x1000F100..=0x1000F200 => {
                 self.sio.write32(addr, val);
+            },
+            _ if dmac::Dmac::is_dmac_addr(addr) => {
+                if let Some(ch) = self.dmac.write_reg(addr, val) {
+                    self.pending_dma_kick = Some(ch);
+                }
             },
             _ => {
                 // Ignore other writes for now

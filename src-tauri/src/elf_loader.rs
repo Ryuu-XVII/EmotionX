@@ -4,8 +4,11 @@ use crate::cpu::ee::EmotionEngine;
 
 pub fn load_elf(path: &str, ee: &mut EmotionEngine) -> Result<u32, String> {
     let buffer = fs::read(path).map_err(|e| format!("Failed to read ELF file: {}", e))?;
-    
-    let elf = Elf::parse(&buffer).map_err(|e| format!("Failed to parse ELF: {}", e))?;
+    load_elf_bytes(&buffer, ee)
+}
+
+pub fn load_elf_bytes(buffer: &[u8], ee: &mut EmotionEngine) -> Result<u32, String> {
+    let elf = Elf::parse(buffer).map_err(|e| format!("Failed to parse ELF: {}", e))?;
     
     // Check if it is a MIPS binary
     if elf.header.e_machine != goblin::elf::header::EM_MIPS {
@@ -37,6 +40,17 @@ pub fn load_elf(path: &str, ee: &mut EmotionEngine) -> Result<u32, String> {
             }
         }
     }
+
+    // Real hardware always has the kernel set up $sp (and other initial thread state) before
+    // handing control to any ELF - the executable's own code never initializes its own stack
+    // pointer. Since we skip that whole kernel/BIOS boot sequence and jump straight to the
+    // entry point, $sp is left at EmotionEngine::new()'s default of 0; the game's first
+    // function-call prologue then computes stack addresses by subtracting from that near-zero
+    // value, wrapping around to addresses near the top of the 32-bit range that alias into the
+    // (read-only) BIOS ROM region instead of real RAM - so every stack save silently goes
+    // nowhere and every restore reads back garbage BIOS bytes. Match the standard PS2 kernel
+    // convention: initial stack near the top of the 32MB RAM (leaving a little headroom).
+    ee.set_reg(29, 0x81FFFFF0);
 
     // Return the entry point
     Ok(elf.header.e_entry as u32)

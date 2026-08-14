@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Gamepad2, Settings, Disc, Play, Cpu, Monitor, Volume2, CpuIcon } from 'lucide-react';
 import { invoke } from '@tauri-apps/api/core';
@@ -14,15 +14,20 @@ const MOCK_GAMES = [
   { id: 4, title: 'Gran Turismo 4', cover: 'https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&q=80&w=400&h=600', region: 'NTSC-J' },
 ];
 
+// GS software framebuffer dimensions (must match src-tauri/src/hw/gs.rs)
+const GS_FB_WIDTH = 640;
+const GS_FB_HEIGHT = 448;
+
 export default function App() {
-  const [activeTab, setActiveTab] = useState<'library' | 'settings'>('library');
+  const [activeTab, setActiveTab] = useState<'library' | 'display' | 'settings'>('library');
   const [settingsTab, setSettingsTab] = useState<'graphics' | 'audio' | 'bios'>('bios');
-  
+
   // Backend State
   const [biosPath, setBiosPath] = useState<string>('default_bios.bin (Baked-in)');
   const [emulatorStatus, setEmulatorStatus] = useState<string>('Connecting to Engine...');
   const [logs, setLogs] = useState<string[]>([]);
   const [isRunning, setIsRunning] = useState(false);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   // Poll status periodically
   useEffect(() => {
@@ -66,6 +71,34 @@ export default function App() {
     }
     return () => clearInterval(interval);
   }, [isRunning]);
+
+  // Poll and draw the GS framebuffer onto the canvas while the Display tab is visible
+  useEffect(() => {
+    if (activeTab !== 'display') return;
+
+    let cancelled = false;
+    const drawFrame = async () => {
+      try {
+        const bytes = await invoke<number[]>('get_framebuffer');
+        if (cancelled) return;
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+        const imageData = new ImageData(new Uint8ClampedArray(bytes), GS_FB_WIDTH, GS_FB_HEIGHT);
+        ctx.putImageData(imageData, 0, 0);
+      } catch (e) {
+        // Emulator not booted yet - nothing to draw
+      }
+    };
+
+    drawFrame();
+    const interval = setInterval(drawFrame, isRunning ? 100 : 500);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, [activeTab, isRunning]);
 
   const addLog = (msg: string) => {
     setLogs(prev => [msg, ...prev].slice(0, 100));
@@ -163,11 +196,17 @@ export default function App() {
             isActive={activeTab === 'library'} 
             onClick={() => setActiveTab('library')} 
           />
-          <NavItem 
-            icon={<Settings className="w-5 h-5" />} 
-            label="Settings" 
-            isActive={activeTab === 'settings'} 
-            onClick={() => setActiveTab('settings')} 
+          <NavItem
+            icon={<Monitor className="w-5 h-5" />}
+            label="Display"
+            isActive={activeTab === 'display'}
+            onClick={() => setActiveTab('display')}
+          />
+          <NavItem
+            icon={<Settings className="w-5 h-5" />}
+            label="Settings"
+            isActive={activeTab === 'settings'}
+            onClick={() => setActiveTab('settings')}
           />
         </div>
         
@@ -260,6 +299,31 @@ export default function App() {
                       </div>
                     </motion.div>
                   ))}
+                </div>
+              </motion.div>
+            )}
+
+            {activeTab === 'display' && (
+              <motion.div
+                key="display"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.2 }}
+                className="h-full flex flex-col items-center"
+              >
+                <div className="w-full mb-6">
+                  <h2 className="text-3xl font-bold tracking-tight text-white mb-2">Display</h2>
+                  <p className="text-slate-400">Live output from the Graphics Synthesizer's software framebuffer.</p>
+                </div>
+                <div className="rounded-xl overflow-hidden border border-white/10 shadow-2xl bg-black">
+                  <canvas
+                    ref={canvasRef}
+                    width={GS_FB_WIDTH}
+                    height={GS_FB_HEIGHT}
+                    className="block"
+                    style={{ imageRendering: 'pixelated', width: GS_FB_WIDTH, height: GS_FB_HEIGHT }}
+                  />
                 </div>
               </motion.div>
             )}

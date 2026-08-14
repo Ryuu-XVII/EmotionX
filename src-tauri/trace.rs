@@ -11,7 +11,7 @@ pub mod hw;
 fn main() {
     let bus = Bus::new();
     let mut ee = EmotionEngine::new(bus);
-    
+
     for _ in 0..200 {
         let log = ee.step();
         println!("{}", log);

@@ -1,0 +1,361 @@
+{
+  "communities": {
+    "0": [
+      "src_tauri_src_cpu_ee_emotionengine",
+      "src_tauri_src_cpu_ee_emotionengine_get_reg",
+      "src_tauri_src_cpu_ee_emotionengine_new",
+      "src_tauri_src_cpu_ee_emotionengine_set_reg",
+      "src_tauri_src_cpu_ee_emotionengine_step",
+      "src_tauri_src_cpu_ee_rs_self",
+      "src_tauri_src_cpu_ee_rs_string",
+      "src_tauri_src_hw_mod",
+      "src_tauri_src_hw_mod_hardware",
+      "src_tauri_src_hw_mod_hardware_new",
+      "src_tauri_src_hw_mod_hardware_read32",
+      "src_tauri_src_hw_mod_hardware_write32",
+      "src_tauri_src_hw_mod_rs_self",
+      "src_tauri_src_memory_bus",
+      "src_tauri_src_memory_bus_bus",
+      "src_tauri_src_memory_bus_bus_new",
+      "src_tauri_src_memory_bus_bus_read16",
+      "src_tauri_src_memory_bus_bus_read32",
+      "src_tauri_src_memory_bus_bus_read8",
+      "src_tauri_src_memory_bus_bus_write16",
+      "src_tauri_src_memory_bus_bus_write32",
+      "src_tauri_src_memory_bus_bus_write8",
+      "src_tauri_src_memory_bus_rs_self",
+      "src_tauri_src_memory_bus_rs_vec",
+      "src_tauri_trace",
+      "src_tauri_trace_main"
+    ],
+    "1": [
+      "ref_dom",
+      "ref_dom_iterable",
+      "ref_es2020",
+      "ref_src",
+      "tsconfig",
+      "tsconfig_compileroptions",
+      "tsconfig_compileroptions_allowimportingtsextensions",
+      "tsconfig_compileroptions_isolatedmodules",
+      "tsconfig_compileroptions_jsx",
+      "tsconfig_compileroptions_lib",
+      "tsconfig_compileroptions_module",
+      "tsconfig_compileroptions_moduleresolution",
+      "tsconfig_compileroptions_noemit",
+      "tsconfig_compileroptions_nofallthroughcasesinswitch",
+      "tsconfig_compileroptions_nounusedlocals",
+      "tsconfig_compileroptions_nounusedparameters",
+      "tsconfig_compileroptions_resolvejsonmodule",
+      "tsconfig_compileroptions_skiplibcheck",
+      "tsconfig_compileroptions_strict",
+      "tsconfig_compileroptions_target",
+      "tsconfig_compileroptions_usedefineforclassfields",
+      "tsconfig_include",
+      "tsconfig_references"
+    ],
+    "2": [
+      "autoprefixer",
+      "package_devdependencies",
+      "package_devdependencies_autoprefixer",
+      "package_devdependencies_postcss",
+      "package_devdependencies_tailwindcss",
+      "package_devdependencies_tailwindcss_vite",
+      "package_devdependencies_tauri_apps_cli",
+      "package_devdependencies_types_react",
+      "package_devdependencies_types_react_dom",
+      "package_devdependencies_typescript",
+      "package_devdependencies_vite",
+      "package_devdependencies_vitejs_plugin_react",
+      "postcss",
+      "tailwindcss",
+      "tailwindcss_vite",
+      "tauri_apps_cli",
+      "types_react",
+      "types_react_dom",
+      "typescript",
+      "vite",
+      "vitejs_plugin_react"
+    ],
+    "3": [
+      "framer_motion",
+      "lucide_react",
+      "package_dependencies",
+      "package_dependencies_framer_motion",
+      "package_dependencies_lucide_react",
+      "package_dependencies_react",
+      "package_dependencies_react_dom",
+      "package_dependencies_tauri_apps_api",
+      "package_dependencies_tauri_apps_plugin_dialog",
+      "package_dependencies_tauri_apps_plugin_opener",
+      "react",
+      "react_dom",
+      "tauri_apps_api",
+      "tauri_apps_plugin_dialog",
+      "tauri_apps_plugin_opener"
+    ],
+    "4": [
+      "src_tauri_src_cpu_ee",
+      "src_tauri_src_cpu_instruction",
+      "src_tauri_src_cpu_instruction_instruction",
+      "src_tauri_src_cpu_instruction_instruction_funct",
+      "src_tauri_src_cpu_instruction_instruction_imm",
+      "src_tauri_src_cpu_instruction_instruction_imm_jump_target",
+      "src_tauri_src_cpu_instruction_instruction_imm_sign_extended",
+      "src_tauri_src_cpu_instruction_instruction_new",
+      "src_tauri_src_cpu_instruction_instruction_opcode",
+      "src_tauri_src_cpu_instruction_instruction_rd",
+      "src_tauri_src_cpu_instruction_instruction_rs",
+      "src_tauri_src_cpu_instruction_instruction_rt",
+      "src_tauri_src_cpu_instruction_instruction_shamt",
+      "src_tauri_src_cpu_instruction_rs_self"
+    ],
+    "5": [
+      "src_tauri_tauri_conf",
+      "src_tauri_tauri_conf_app",
+      "src_tauri_tauri_conf_app_security",
+      "src_tauri_tauri_conf_app_windows",
+      "src_tauri_tauri_conf_build",
+      "src_tauri_tauri_conf_build_beforebuildcommand",
+      "src_tauri_tauri_conf_build_beforedevcommand",
+      "src_tauri_tauri_conf_build_devurl",
+      "src_tauri_tauri_conf_build_frontenddist",
+      "src_tauri_tauri_conf_identifier",
+      "src_tauri_tauri_conf_productname",
+      "src_tauri_tauri_conf_schema",
+      "src_tauri_tauri_conf_security_csp",
+      "src_tauri_tauri_conf_version"
+    ],
+    "6": [
+      "mutex",
+      "option",
+      "result",
+      "src_tauri_src_lib",
+      "src_tauri_src_lib_boot_game",
+      "src_tauri_src_lib_emulatorstate",
+      "src_tauri_src_lib_get_status",
+      "src_tauri_src_lib_rs_string",
+      "src_tauri_src_lib_rs_vec",
+      "src_tauri_src_lib_run",
+      "src_tauri_src_lib_run_cpu_batch",
+      "src_tauri_src_lib_step_cpu",
+      "state"
+    ],
+    "7": [
+      "package",
+      "package_name",
+      "package_private",
+      "package_scripts",
+      "package_scripts_build",
+      "package_scripts_dev",
+      "package_scripts_preview",
+      "package_scripts_tauri",
+      "package_type",
+      "package_version"
+    ],
+    "8": [
+      "ref_core_default",
+      "ref_dialog_default",
+      "ref_main",
+      "ref_opener_default",
+      "src_tauri_capabilities_default",
+      "src_tauri_capabilities_default_description",
+      "src_tauri_capabilities_default_identifier",
+      "src_tauri_capabilities_default_permissions",
+      "src_tauri_capabilities_default_schema",
+      "src_tauri_capabilities_default_windows"
+    ],
+    "9": [
+      "ref_vite_config_ts",
+      "tsconfig_node",
+      "tsconfig_node_compileroptions",
+      "tsconfig_node_compileroptions_allowsyntheticdefaultimports",
+      "tsconfig_node_compileroptions_composite",
+      "tsconfig_node_compileroptions_module",
+      "tsconfig_node_compileroptions_moduleresolution",
+      "tsconfig_node_compileroptions_skiplibcheck",
+      "tsconfig_node_include"
+    ],
+    "10": [
+      "ref_icons_128x128_2x_png",
+      "ref_icons_128x128_png",
+      "ref_icons_32x32_png",
+      "ref_icons_icon_ico",
+      "src_tauri_tauri_conf_bundle",
+      "src_tauri_tauri_conf_bundle_active",
+      "src_tauri_tauri_conf_bundle_icon",
+      "src_tauri_tauri_conf_bundle_targets"
+    ],
+    "11": [
+      "src_app",
+      "src_app_app",
+      "src_app_mock_games",
+      "src_app_navitem",
+      "src_app_settingstab",
+      "src_main"
+    ],
+    "12": [
+      "src_tauri_build",
+      "src_tauri_build_main"
+    ],
+    "13": [
+      "src_tauri_src_main",
+      "src_tauri_src_main_main"
+    ],
+    "14": [
+      "src_tauri_src_cpu_mod"
+    ],
+    "15": [
+      "src_tauri_src_memory_mod"
+    ],
+    "16": [
+      "src_vite_env_d"
+    ],
+    "17": [
+      "vite_config"
+    ]
+  },
+  "cohesion": {
+    "0": 0.09538461538461539,
+    "1": 0.08695652173913043,
+    "2": 0.09523809523809523,
+    "3": 0.13333333333333333,
+    "4": 0.15384615384615385,
+    "5": 0.14285714285714285,
+    "6": 0.32051282051282054,
+    "7": 0.2,
+    "8": 0.2,
+    "9": 0.2222222222222222,
+    "10": 0.25,
+    "11": 0.3333333333333333,
+    "12": 1.0,
+    "13": 1.0,
+    "14": 1.0,
+    "15": 1.0,
+    "16": 1.0,
+    "17": 1.0
+  },
+  "gods": [
+    {
+      "id": "tsconfig_compileroptions",
+      "label": "compilerOptions",
+      "degree": 16
+    },
+    {
+      "id": "src_tauri_src_memory_bus_bus",
+      "label": "Bus",
+      "degree": 15
+    },
+    {
+      "id": "src_tauri_src_cpu_instruction_instruction",
+      "label": "Instruction",
+      "degree": 11
+    },
+    {
+      "id": "src_tauri_src_cpu_ee_emotionengine",
+      "label": "EmotionEngine",
+      "degree": 9
+    },
+    {
+      "id": "src_tauri_src_lib_emulatorstate",
+      "label": "EmulatorState",
+      "degree": 8
+    },
+    {
+      "id": "src_tauri_src_hw_mod_hardware",
+      "label": "Hardware",
+      "degree": 6
+    },
+    {
+      "id": "src_tauri_src_lib_run_cpu_batch",
+      "label": "run_cpu_batch()",
+      "degree": 6
+    },
+    {
+      "id": "tsconfig_node_compileroptions",
+      "label": "compilerOptions",
+      "degree": 6
+    },
+    {
+      "id": "package_scripts",
+      "label": "scripts",
+      "degree": 5
+    },
+    {
+      "id": "src_tauri_src_lib_step_cpu",
+      "label": "step_cpu()",
+      "degree": 5
+    }
+  ],
+  "surprises": [
+    {
+      "source": "EmulatorState",
+      "target": "EmotionEngine",
+      "source_files": [
+        "src-tauri/src/lib.rs",
+        "src-tauri/src/cpu/ee.rs"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "references",
+      "why": "bridges separate communities"
+    },
+    {
+      "source": "EmotionEngine",
+      "target": "Bus",
+      "source_files": [
+        "src-tauri/src/cpu/ee.rs",
+        "src-tauri/src/memory/bus.rs"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "references",
+      "why": "cross-file semantic connection"
+    },
+    {
+      "source": "Bus",
+      "target": "Hardware",
+      "source_files": [
+        "src-tauri/src/memory/bus.rs",
+        "src-tauri/src/hw/mod.rs"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "references",
+      "why": "cross-file semantic connection"
+    }
+  ],
+  "questions": [
+    {
+      "type": "bridge_node",
+      "question": "Why does `Bus` connect `Bus` to `Instruction`, `lib.rs`?",
+      "why": "High betweenness centrality (0.051) - this node is a cross-community bridge."
+    },
+    {
+      "type": "bridge_node",
+      "question": "Why does `devDependencies` connect `devDependencies` to `package.json`?",
+      "why": "High betweenness centrality (0.044) - this node is a cross-community bridge."
+    },
+    {
+      "type": "bridge_node",
+      "question": "Why does `dependencies` connect `dependencies` to `package.json`?",
+      "why": "High betweenness centrality (0.034) - this node is a cross-community bridge."
+    },
+    {
+      "type": "isolated_nodes",
+      "question": "What connects `name`, `private`, `version` to the rest of the system?",
+      "why": "74 weakly-connected nodes found - possible documentation gaps or missing edges."
+    },
+    {
+      "type": "low_cohesion",
+      "question": "Should `Bus` be split into smaller, more focused modules?",
+      "why": "Cohesion score 0.09538461538461539 - nodes in this community are weakly interconnected."
+    },
+    {
+      "type": "low_cohesion",
+      "question": "Should `compilerOptions` be split into smaller, more focused modules?",
+      "why": "Cohesion score 0.08695652173913043 - nodes in this community are weakly interconnected."
+    },
+    {
+      "type": "low_cohesion",
+      "question": "Should `devDependencies` be split into smaller, more focused modules?",
+      "why": "Cohesion score 0.09523809523809523 - nodes in this community are weakly interconnected."
+    }
+  ]
+}
