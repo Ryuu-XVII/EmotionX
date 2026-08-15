@@ -45,6 +45,8 @@ pub struct EmotionEngine {
     // Fake semaphore ID counter for the HLE'd kernel semaphore syscalls (see handle_syscall).
     // We have no real thread scheduler, so semaphores never actually block - see the note there.
     pub next_sema_id: i32,
+    pub next_handler_id: i32,
+    pub next_thread_id: i32,
 
     // Consecutive instruction fetches from unmapped memory (see Bus::is_code_mapped). Used to
     // detect a derailed CPU (jumped somewhere with no real code) so callers can stop instead of
@@ -76,6 +78,8 @@ impl EmotionEngine {
             vu0: Vu0::new(),
             sa: 0,
             next_sema_id: 1,
+            next_handler_id: 1,
+            next_thread_id: 1,
             consecutive_unmapped_fetches: 0,
             bus,
         }
@@ -147,6 +151,7 @@ impl EmotionEngine {
 
         // Artificial VBlank (IRQ 3) at 60Hz (approx 5,000,000 cycles for a 300MHz CPU)
         if self.cop0.count % 100_000 == 0 {
+            self.bus.hw.gs.toggle_vblank();
             self.bus.hw.trigger_irq(3);
         }
 
@@ -1416,6 +1421,92 @@ impl EmotionEngine {
                 log.push_str(&format!(" [HLE Syscall 0x04: Exit]"));
                 self.set_reg(2, 0);
             },
+            // INTC / DMAC Handler management
+            0x10 => {
+                // AddIntcHandler(cause, handler, next, arg)
+                let id = self.next_handler_id;
+                self.next_handler_id += 1;
+                log.push_str(&format!(" [HLE Syscall 0x10: AddIntcHandler -> id {}]", id));
+                self.set_reg(2, id as u64);
+            },
+            0x11 => {
+                // RemoveIntcHandler(cause, id)
+                log.push_str(" [HLE Syscall 0x11: RemoveIntcHandler]");
+                self.set_reg(2, 0);
+            },
+            0x12 => {
+                // EnableIntc(cause)
+                log.push_str(" [HLE Syscall 0x12: EnableIntc]");
+                self.set_reg(2, 0);
+            },
+            0x13 => {
+                // DisableIntc(cause)
+                log.push_str(" [HLE Syscall 0x13: DisableIntc]");
+                self.set_reg(2, 0);
+            },
+            0x14 => {
+                // AddDmacHandler(channel, handler, next, arg)
+                let id = self.next_handler_id;
+                self.next_handler_id += 1;
+                log.push_str(&format!(" [HLE Syscall 0x14: AddDmacHandler -> id {}]", id));
+                self.set_reg(2, id as u64);
+            },
+            0x15 => {
+                // RemoveDmacHandler(channel, id)
+                log.push_str(" [HLE Syscall 0x15: RemoveDmacHandler]");
+                self.set_reg(2, 0);
+            },
+            0x16 => {
+                // EnableDmac(channel)
+                log.push_str(" [HLE Syscall 0x16: EnableDmac]");
+                self.set_reg(2, 0);
+            },
+            0x17 => {
+                // DisableDmac(channel)
+                log.push_str(" [HLE Syscall 0x17: DisableDmac]");
+                self.set_reg(2, 0);
+            },
+            // Thread management
+            0x20 => {
+                // CreateThread(thread_param)
+                let tid = self.next_thread_id;
+                self.next_thread_id += 1;
+                log.push_str(&format!(" [HLE Syscall 0x20: CreateThread -> id {}]", tid));
+                self.set_reg(2, tid as u64);
+            },
+            0x22 => {
+                // StartThread(thread_id, args)
+                log.push_str(" [HLE Syscall 0x22: StartThread]");
+                self.set_reg(2, 0);
+            },
+            0x23 => {
+                // ExitThread()
+                log.push_str(" [HLE Syscall 0x23: ExitThread]");
+                self.set_reg(2, 0);
+            },
+            0x24 => {
+                // ExitDeleteThread()
+                log.push_str(" [HLE Syscall 0x24: ExitDeleteThread]");
+                self.set_reg(2, 0);
+            },
+            0x29 => {
+                // RotateThreadReadyQueue(priority)
+                log.push_str(" [HLE Syscall 0x29: RotateThreadReadyQueue]");
+                self.set_reg(2, 0);
+            },
+            // Alarm management
+            0x2C => {
+                // SetAlarm(time, callback, arg)
+                let id = self.next_handler_id;
+                self.next_handler_id += 1;
+                log.push_str(&format!(" [HLE Syscall 0x2C: SetAlarm -> id {}]", id));
+                self.set_reg(2, id as u64);
+            },
+            0x2D => {
+                // ReleaseAlarm(id)
+                log.push_str(" [HLE Syscall 0x2D: ReleaseAlarm]");
+                self.set_reg(2, 0);
+            },
             0x3D => {
                 // Putc (char in $a0)
                 let c = (self.get_reg(4) & 0xFF) as u8 as char;
@@ -1466,6 +1557,18 @@ impl EmotionEngine {
             0x47 => {
                 // ReferSemaStatus
                 log.push_str(" [HLE Syscall 0x47: ReferSemaStatus]");
+                self.set_reg(2, 0);
+            },
+            0x7C => {
+                // GetOsdConfigParam(config_ptr)
+                let ptr = self.get_reg(4) as u32;
+                if ptr != 0 {
+                    // Zero-initialize config struct (English language, NTSC, 4:3, standard time)
+                    for i in 0..32 {
+                        self.bus.write8(ptr.wrapping_add(i), 0);
+                    }
+                }
+                log.push_str(" [HLE Syscall 0x7C: GetOsdConfigParam]");
                 self.set_reg(2, 0);
             },
             _ => {
@@ -1720,6 +1823,20 @@ impl EmotionEngine {
                     for i in 0..4 { r[i] = fs[i] * ft[bc]; }
                     self.vu0.set_vf_masked(fd_idx, r, dest_mask);
                 },
+                0x20..=0x23 => {
+                    let bc = bc_component(funct);
+                    log.push_str(&format!("VMULAbc ACC, vf{}, vf{}[{}]", fs_idx, ft_idx, bc));
+                    let mut r = [0f32; 4];
+                    for i in 0..4 { r[i] = fs[i] * ft[bc]; }
+                    self.vu0.acc = r;
+                },
+                0x24..=0x27 => {
+                    let bc = bc_component(funct);
+                    log.push_str(&format!("VMADDAbc ACC, vf{}, vf{}[{}]", fs_idx, ft_idx, bc));
+                    let mut r = [0f32; 4];
+                    for i in 0..4 { r[i] = acc[i] + fs[i] * ft[bc]; }
+                    self.vu0.acc = r;
+                },
                 0x28 => {
                     log.push_str(&format!("VADDA ACC, vf{}, vf{}", fs_idx, ft_idx));
                     let mut r = [0f32; 4];
@@ -1756,6 +1873,28 @@ impl EmotionEngine {
                     self.vu0.acc[0] = fs[1] * ft[2];
                     self.vu0.acc[1] = fs[2] * ft[0];
                     self.vu0.acc[2] = fs[0] * ft[1];
+                },
+                0x1F | 0x3F => {
+                    // VCLIP: test fs against +/- ft.w
+                    let w = ft[3].abs();
+                    let inside = fs[0].abs() <= w && fs[1].abs() <= w && fs[2].abs() <= w;
+                    self.vu0.clip_flag = inside;
+                    log.push_str(&format!("VCLIP vf{}, vf{}", fs_idx, ft_idx));
+                },
+                0x3C => {
+                    let bc = bc_component(funct);
+                    log.push_str(&format!("VDIV Q, vf{}[0], vf{}[{}]", fs_idx, ft_idx, bc));
+                    if ft[bc] != 0.0 {
+                        self.vu0.q = fs[0] / ft[bc];
+                    }
+                },
+                0x3D => {
+                    let bc = bc_component(funct);
+                    log.push_str(&format!("VSQRT Q, vf{}[{}]", ft_idx, bc));
+                    self.vu0.q = ft[bc].abs().sqrt();
+                },
+                0x3E => {
+                    log.push_str("WAITQ");
                 },
                 _ => {
                     log.push_str(&format!("UNKNOWN COP2 FMAC funct {:#08b}", funct));
@@ -1816,6 +1955,49 @@ impl EmotionEngine {
                     self.nullify = true;
                 }
             },
+            0x00 | 0x10 => {
+                // Integer VI operations
+                let funct = instr.funct();
+                let fs_vi = instr.rd() as usize;
+                let ft_vi = instr.rt() as usize;
+                let fd_vi = instr.shamt() as usize;
+                match funct {
+                    0x30 => {
+                        // VIADD fd, fs, ft
+                        log.push_str(&format!("VIADD vi{}, vi{}, vi{}", fd_vi, fs_vi, ft_vi));
+                        let val = self.vu0.get_vi(fs_vi).wrapping_add(self.vu0.get_vi(ft_vi));
+                        self.vu0.set_vi(fd_vi, val);
+                    },
+                    0x31 => {
+                        // VISUB fd, fs, ft
+                        log.push_str(&format!("VISUB vi{}, vi{}, vi{}", fd_vi, fs_vi, ft_vi));
+                        let val = self.vu0.get_vi(fs_vi).wrapping_sub(self.vu0.get_vi(ft_vi));
+                        self.vu0.set_vi(fd_vi, val);
+                    },
+                    0x32 => {
+                        // VIADDI rt, rs, imm5
+                        let imm = instr.shamt() as u16;
+                        log.push_str(&format!("VIADDI vi{}, vi{}, {}", ft_vi, fs_vi, imm));
+                        let val = self.vu0.get_vi(fs_vi).wrapping_add(imm);
+                        self.vu0.set_vi(ft_vi, val);
+                    },
+                    0x34 => {
+                        // VIAND fd, fs, ft
+                        log.push_str(&format!("VIAND vi{}, vi{}, vi{}", fd_vi, fs_vi, ft_vi));
+                        let val = self.vu0.get_vi(fs_vi) & self.vu0.get_vi(ft_vi);
+                        self.vu0.set_vi(fd_vi, val);
+                    },
+                    0x35 => {
+                        // VIOR fd, fs, ft
+                        log.push_str(&format!("VIOR vi{}, vi{}, vi{}", fd_vi, fs_vi, ft_vi));
+                        let val = self.vu0.get_vi(fs_vi) | self.vu0.get_vi(ft_vi);
+                        self.vu0.set_vi(fd_vi, val);
+                    },
+                    _ => {
+                        log.push_str(&format!("UNKNOWN COP2 VI funct {:#08b}", funct));
+                    }
+                }
+            },
             _ => {
                 log.push_str(&format!("UNKNOWN COP2: {:#07b}", rs));
             }
@@ -1854,6 +2036,12 @@ impl EmotionEngine {
 
         match funct {
             0x04 => un_op!("PLZCW", mmi::plzcw),
+            0x2B | 0x3B => {
+                // QFSRV rd, rs, rt - Quadword Funnel Shift Right Variable using sa
+                log.push_str(&format!("QFSRV $v{}, $v{}, $v{}", rd_idx, rs_idx, rt_idx));
+                let result = mmi::qfsrv(rs, rt, self.sa);
+                self.set_reg128(rd_idx, result);
+            },
             0x08 => {
                 // MMI0
                 match shamt {
@@ -2611,5 +2799,122 @@ mod tests {
 
         // vf1 * 2.0 broadcast = (2,0,0,0)
         assert_eq!(ee.vu0.get_vf(2), [2.0, 0.0, 0.0, 0.0]);
+    }
+
+    #[test]
+    fn test_qfsrv_decode_and_execution() {
+        let mut ee = EmotionEngine::new(crate::memory::bus::Bus::new());
+        // Set $sa = 4 (shift by 4 bytes)
+        ee.sa = 4;
+        ee.set_reg128(8, 0x11223344_55667788_99AABBCC_DDEEFF00u128); // $t0
+        ee.set_reg128(9, 0x01020304_05060708_090A0B0C_0D0E0F10u128); // $t1
+
+        // QFSRV $v10, $v8, $v9 (opcode 0x1C, rs=8, rt=9, rd=10, shamt=0, funct=0x2B)
+        let qfsrv = (0x1Cu32 << 26) | (8 << 21) | (9 << 16) | (10 << 11) | 0x2B;
+        ee.bus.write32(0x00100000, qfsrv);
+        ee.set_pc(0x00100000);
+
+        let log = ee.step();
+        assert!(log.contains("QFSRV"));
+        assert_ne!(ee.get_reg128(10), 0);
+    }
+
+    #[test]
+    fn test_vu0_vclip_and_viadd() {
+        let mut ee = EmotionEngine::new(crate::memory::bus::Bus::new());
+        // Set vf1 = (0.5, 0.5, 0.5, 1.0) inside w, vf2 = (0, 0, 0, 1.0)
+        ee.vu0.vf[1] = [0.5, 0.5, 0.5, 1.0];
+        ee.vu0.vf[2] = [0.0, 0.0, 0.0, 1.0];
+
+        // VCLIP vf1, vf2 (FMAC marker 0x10, rs=0x10, ft=2, fs=1, funct=0x1F)
+        let vclip = (0x12u32 << 26) | (0x10 << 21) | (2 << 16) | (1 << 11) | 0x1F;
+        ee.bus.write32(0x00100000, vclip);
+        ee.set_pc(0x00100000);
+        let log = ee.step();
+        assert!(log.contains("VCLIP"));
+        assert!(ee.vu0.clip_flag, "Point (0.5, 0.5, 0.5) should be inside +/- 1.0 w");
+
+        // VIADD vi3, vi1, vi2: vi1=10, vi2=25 -> vi3=35
+        ee.vu0.set_vi(1, 10);
+        ee.vu0.set_vi(2, 25);
+        // rs=0x00, fs=1 (rd), ft=2 (rt), fd=3 (shamt), funct=0x30
+        let viadd = (0x12u32 << 26) | (0x00 << 21) | (2 << 16) | (1 << 11) | (3 << 6) | 0x30;
+        ee.bus.write32(0x00100004, viadd);
+        let log2 = ee.step();
+        assert!(log2.contains("VIADD"));
+        assert_eq!(ee.vu0.get_vi(3), 35);
+    }
+
+    #[test]
+    fn test_intc_and_dmac_syscalls() {
+        let mut ee = EmotionEngine::new(crate::memory::bus::Bus::new());
+
+        // SYSCALL instruction
+        let syscall_op = 12u32;
+        ee.bus.write32(0x00100000, syscall_op);
+        ee.bus.write32(0x00100004, syscall_op);
+        ee.bus.write32(0x00100008, syscall_op);
+
+        // 1. AddIntcHandler (v1 = 0x10)
+        ee.set_reg(3, 0x10);
+        ee.set_pc(0x00100000);
+        ee.step();
+        assert_eq!(ee.get_reg(2), 1); // returns handler id 1
+
+        // 2. EnableIntc (v1 = 0x12)
+        ee.set_reg(3, 0x12);
+        ee.set_pc(0x00100004);
+        ee.step();
+        assert_eq!(ee.get_reg(2), 0);
+
+        // 3. GetOsdConfigParam (v1 = 0x7C, a0 = 0x5000)
+        ee.set_reg(3, 0x7C);
+        ee.set_reg(4, 0x5000);
+        ee.set_pc(0x00100008);
+        ee.step();
+        assert_eq!(ee.get_reg(2), 0);
+        assert_eq!(ee.bus.read32(0x5000), 0);
+    }
+
+    #[test]
+    fn test_gs_csr_field_toggle() {
+        let mut ee = EmotionEngine::new(crate::memory::bus::Bus::new());
+        ee.set_pc(0x00100000); // Point to RAM NOPs to avoid BIOS startup GS reset
+        let initial_field = (ee.bus.hw.gs.csr >> 13) & 1;
+
+        // Step enough cycles to trigger VBlank toggle
+        for _ in 0..100_000 {
+            ee.step();
+        }
+
+        let new_field = (ee.bus.hw.gs.csr >> 13) & 1;
+        assert_ne!(initial_field, new_field, "GS_CSR FIELD bit should toggle on VBlank");
+        assert_ne!(ee.bus.hw.gs.csr & (1 << 3), 0, "GS_CSR VSINT bit should be set on VBlank");
+    }
+
+    #[test]
+    fn test_gs_tex0_and_alpha_packed_writes() {
+        let mut ee = EmotionEngine::new(crate::memory::bus::Bus::new());
+
+        // A+D write to TEX0_1 (0x06) and ALPHA_1 (0x42)
+        let nloop: u128 = 1;
+        let nreg: u128 = 2;
+        let regs: u128 = 0x0E | (0x0E << 4);
+        let tag = nloop | (nreg << 60) | (regs << 64);
+
+        let tex0_val: u128 = 0x00100000_12345678u128 | (0x06u128 << 64);
+        let alpha_val: u128 = 0x00000000_00000044u128 | (0x42u128 << 64);
+
+        ee.bus.write128(0x4000, tag);
+        ee.bus.write128(0x4010, tex0_val);
+        ee.bus.write128(0x4020, alpha_val);
+
+        // Kick GIF DMA
+        ee.bus.write32(0x1000A010, 0x4000);
+        ee.bus.write32(0x1000A020, 3);
+        ee.bus.write32(0x1000A000, 0x100);
+
+        assert_eq!(ee.bus.hw.gs.tex0_1, 0x00100000_12345678);
+        assert_eq!(ee.bus.hw.gs.alpha_1, 0x44);
     }
 }

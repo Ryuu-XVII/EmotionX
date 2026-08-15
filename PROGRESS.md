@@ -159,5 +159,23 @@ This document tracks the progress of **EmotionX**, a custom PlayStation 2 emulat
 *   **Verified: the real NFS Most Wanted CHD now runs 100 million instructions with zero unknown-opcode hits and zero derailment** (previously died at instruction ~758,000 every time, across many rounds of unrelated fixes). PC settles into a small, stable, valid address range — the game is now looping (most likely waiting on a VBlank interrupt or an IOP/SIF response this emulator doesn't yet provide) instead of crashing into unmapped memory.
 *   **Test coverage:** `test_sp_never_allowed_to_become_zero` covers both the 64-bit (`set_reg`, e.g. `ADDIU`) and 128-bit (`set_reg128`, e.g. the MMI clear idiom) write paths, and confirms no other register is affected by the guard.
 
-## Phase 24: TBD
-*   **Goal:** the game now runs stably in a loop instead of crashing — next is figuring out what it's waiting on (VBlank timing? An IOP/SIF response?) to make real forward progress toward rendering. Other candidates: GS texturing, `QFSRV`, completing the VU0 broadcast+accumulate opcode family.
+## Phase 24: Core Subsystems Completeness — GS Status, VBlank/INTC Syscalls, QFSRV, and VU0 Matrix Primitives
+*   **GS CSR & Field Toggling (`0x12001000`):** Implemented realistic `GS_CSR` register status tracking. `FIELD` (bit 13) now toggles between 0 (even) and 1 (odd) on each simulated VBlank interval at 60Hz, and `VSINT` (vertical blanking status flag) is asserted and clearable via standard write-1-to-clear semantics. Games that spin-wait on `GS_CSR.FIELD` or `GS_CSR.VSINT` now observe genuine field transitions.
+*   **GS Texture & Context Register Foundation:** Extended the PACKED-mode GIF parser in `gs.rs` to decode `TEX0_1`, `TEX0_2`, `TEX1_1`, `TEX1_2`, `CLAMP_1`, `CLAMP_2`, `FRAME_1`, `FRAME_2`, `ZBUF_1`, `ZBUF_2`, `SCISSOR_1`, `SCISSOR_2`, `ALPHA_1`, `ALPHA_2`, and `FINISH` event triggers.
+*   **PS2 BIOS & Kernel Syscall Infrastructure:** Added comprehensive HLE support for crucial PS2 kernel syscalls:
+    *   `0x10`–`0x13`: `AddIntcHandler`, `RemoveIntcHandler`, `EnableIntc`, `DisableIntc`.
+    *   `0x14`–`0x17`: `AddDmacHandler`, `RemoveDmacHandler`, `EnableDmac`, `DisableDmac`.
+    *   `0x20`–`0x24`: `CreateThread`, `StartThread`, `ExitThread`, `ExitDeleteThread`.
+    *   `0x29`: `RotateThreadReadyQueue`.
+    *   `0x2C`–`0x2D`: `SetAlarm`, `ReleaseAlarm`.
+    *   `0x7C`: `GetOsdConfigParam` (populates default English / NTSC / 4:3 parameters into game memory).
+*   **MMI Instruction Completeness — `QFSRV`:** Implemented `QFSRV` (Quadword Funnel Shift Right Variable), which shifts the 256-bit concatenation of `rs` and `rt` right by `sa` bytes (the shift-amount register loaded by `MTSAB`/`MTSAH`).
+*   **VU0 Macro Mode Enhancements (COP2):**
+    *   Added broadcast accumulate matrix operations: `VMULAbc` and `VMADDAbc` (the core primitives for `vmulax.xyzw`/`vmadday.xyzw` transform loops).
+    *   Added `VCLIP` test against $+/- w$ coordinate boundaries.
+    *   Added transcendental / divider operations: `VDIV`, `VSQRT`, and `WAITQ`.
+    *   Added integer VI register operations: `VIADD`, `VISUB`, `VIADDI`, `VIAND`, `VIOR`.
+*   **Test coverage:** Added unit tests covering `QFSRV` funnel shift execution, `VCLIP` + `VIADD`, INTC/DMAC/OSD syscalls, GS CSR field toggling, and GIF DMA texture/alpha register writes (41 total tests passing).
+
+## Phase 25: TBD
+*   **Goal:** Investigate full textured triangle rasterization, SIF RPC CALL (`0x8000000A`) handling for CDVD / Pad subsystems, and frame rendering telemetry in the React/Tauri UI.

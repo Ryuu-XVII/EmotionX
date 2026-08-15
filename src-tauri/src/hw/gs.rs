@@ -43,6 +43,22 @@ pub struct Gs {
     // Drawing context, set via GIF register writes.
     pub prim: u64,
     pub rgbaq: u64,
+    pub tex0_1: u64,
+    pub tex0_2: u64,
+    pub tex1_1: u64,
+    pub tex1_2: u64,
+    pub clamp_1: u64,
+    pub clamp_2: u64,
+    pub frame_1: u64,
+    pub frame_2: u64,
+    pub zbuf_1: u64,
+    pub zbuf_2: u64,
+    pub scissor_1: u64,
+    pub scissor_2: u64,
+    pub test_1: u64,
+    pub test_2: u64,
+    pub alpha_1: u64,
+    pub alpha_2: u64,
     current_color: u32, // cached 0xAARRGGBB from the last RGBAQ write
     prim_type: u32,
     vertex_queue: Vec<Vertex>,
@@ -62,16 +78,41 @@ impl Gs {
             dispfb2: 0,
             display2: 0,
             bgcolor: 0,
-            csr: 0,
+            // GS Revision 0x2E in bits 16..24, initial FIELD = 0
+            csr: (0x2Eu64 << 16),
             imr: 0,
             prim: 0,
             rgbaq: 0,
+            tex0_1: 0,
+            tex0_2: 0,
+            tex1_1: 0,
+            tex1_2: 0,
+            clamp_1: 0,
+            clamp_2: 0,
+            frame_1: 0,
+            frame_2: 0,
+            zbuf_1: 0,
+            zbuf_2: 0,
+            scissor_1: 0,
+            scissor_2: 0,
+            test_1: 0,
+            test_2: 0,
+            alpha_1: 0,
+            alpha_2: 0,
             current_color: 0xFF000000,
             prim_type: PRIM_POINT,
             vertex_queue: Vec::with_capacity(3),
             framebuffer: vec![0; FB_WIDTH * FB_HEIGHT],
             pixels_drawn: 0,
         }
+    }
+
+    /// Toggles the GS field bit (odd/even) and asserts VSINT on VBlank intervals.
+    pub fn toggle_vblank(&mut self) {
+        // Toggle FIELD (bit 13)
+        self.csr ^= 1 << 13;
+        // Set VSINT (bit 3)
+        self.csr |= 1 << 3;
     }
 
     pub fn read64(&self, addr: u32) -> u64 {
@@ -100,7 +141,15 @@ impl Gs {
             0x12000090 => self.dispfb2 = val,
             0x120000A0 => self.display2 = val,
             0x120000E0 => self.bgcolor = val,
-            0x12001000 => self.csr &= !val, // status bits are write-1-to-clear
+            0x12001000 => {
+                // RESET (bit 9)
+                if (val & (1 << 9)) != 0 {
+                    self.prim = 0;
+                    self.csr = 0x2Eu64 << 16;
+                }
+                // Status bits (bits 0..5: SIGNAL, FINISH, HSINT, VSINT, EDWINT) are write-1-to-clear
+                self.csr &= !(val & 0x3F);
+            },
             0x12001010 => self.imr = val,
             _ => {}
         }
@@ -162,6 +211,14 @@ impl Gs {
                 let y = (y_fixed >> 4) as i32;
                 self.kick_vertex(x, y);
             }
+            0x06 => {
+                // TEX0_1 (packed): low 64 bits
+                self.tex0_1 = qword as u64;
+            }
+            0x07 => {
+                // TEX0_2 (packed)
+                self.tex0_2 = qword as u64;
+            }
             0x0E => {
                 // A+D: direct register write. Data = low 64 bits, target register = bits[64:72).
                 let value = qword as u64;
@@ -177,10 +234,24 @@ impl Gs {
                         self.rgbaq = value;
                         self.current_color = (a << 24) | (r << 16) | (g << 8) | b;
                     }
+                    0x06 => self.tex0_1 = value,
+                    0x07 => self.tex0_2 = value,
+                    0x14 => self.tex1_1 = value,
+                    0x15 => self.tex1_2 = value,
+                    0x16 => self.clamp_1 = value,
+                    0x17 => self.clamp_2 = value,
+                    0x40 => self.csr |= 1 << 1, // FINISH event
+                    0x42 => self.alpha_1 = value,
+                    0x43 => self.alpha_2 = value,
+                    0x4C => self.frame_1 = value,
+                    0x4D => self.frame_2 = value,
+                    0x4E => self.zbuf_1 = value,
+                    0x4F => self.zbuf_2 = value,
+                    0x40..=0x41 => self.scissor_1 = value,
                     _ => {}
                 }
             }
-            _ => {} // NOP, ST/UV/TEX0/CLAMP/FOG - not needed yet (no texturing)
+            _ => {} // NOP, ST/UV/FOG
         }
     }
 

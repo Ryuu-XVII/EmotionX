@@ -276,6 +276,25 @@ pub fn pcpyh(rt: u128) -> u128 {
     from_lanes16([b[0]; 8])
 }
 
+/// Quadword Funnel Shift Right Variable: concatenates rs (high) and rt (low),
+/// then shifts right by (sa & 0xF) bytes.
+pub fn qfsrv(rs: u128, rt: u128, sa: u32) -> u128 {
+    let s = (sa & 0xF) as usize;
+    if s == 0 {
+        return rt;
+    }
+    let b_rs = rs.to_le_bytes();
+    let b_rt = rt.to_le_bytes();
+    let mut out = [0u8; 16];
+    for i in 0..(16 - s) {
+        out[i] = b_rt[i + s];
+    }
+    for i in 0..s {
+        out[16 - s + i] = b_rs[i];
+    }
+    u128::from_le_bytes(out)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -343,5 +362,19 @@ mod tests {
         assert_eq!(result[1], 31); // zero: defined as 31
         assert_eq!(result[2], 0);  // 0x80000000 is negative (-2^31); ~v = 0x7FFFFFFF has 0 leading zeros... see below
         assert_eq!(result[3], 31); // 0xFFFFFFFF = -1; ~v = 0 -> 31
+    }
+
+    #[test]
+    fn test_qfsrv_funnel_shift() {
+        let rs = from_lanes8([16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31]);
+        let rt = from_lanes8([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]);
+
+        // sa = 0 -> returns rt unmodified
+        assert_eq!(lanes8(qfsrv(rs, rt, 0)), lanes8(rt));
+
+        // sa = 4 -> shifts right by 4 bytes: lower 12 bytes from rt[4..16], top 4 bytes from rs[0..4]
+        let res4 = lanes8(qfsrv(rs, rt, 4));
+        assert_eq!(res4[0..12], [4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]);
+        assert_eq!(res4[12..16], [16, 17, 18, 19]);
     }
 }
