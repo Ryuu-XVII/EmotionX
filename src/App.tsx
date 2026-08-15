@@ -48,7 +48,7 @@ export default function App() {
   // Listen for SIO Logs
   useEffect(() => {
     const unlisten = listen<string>('sio-log', (event) => {
-      setLogs(prev => [`[SIO] ${event.payload}`, ...prev].slice(0, 100));
+      setLogs(prev => [`[SIO] ${event.payload}`, ...prev].slice(0, 50));
     });
     return () => {
       unlisten.then(f => f());
@@ -59,15 +59,22 @@ export default function App() {
   useEffect(() => {
     let interval: ReturnType<typeof setInterval>;
     if (isRunning) {
+      let inFlight = false;
       interval = setInterval(async () => {
+        if (inFlight) return;
+        inFlight = true;
         try {
           const result = await invoke<string[]>('run_cpu_batch', { steps: 50000 });
-          setLogs(prev => [...result.reverse(), ...prev].slice(0, 100));
+          if (result && result.length > 0) {
+            setLogs(prev => [...result.reverse(), ...prev].slice(0, 30));
+          }
         } catch (e) {
           console.error(e);
           setIsRunning(false);
+        } finally {
+          inFlight = false;
         }
-      }, 50); // Run batch every 50ms
+      }, 30);
     }
     return () => clearInterval(interval);
   }, [isRunning]);
@@ -77,23 +84,34 @@ export default function App() {
     if (activeTab !== 'display') return;
 
     let cancelled = false;
+    let inFlightDraw = false;
     const drawFrame = async () => {
+      if (cancelled || inFlightDraw) return;
+      inFlightDraw = true;
       try {
-        const bytes = await invoke<number[]>('get_framebuffer');
+        const raw = await invoke<ArrayBuffer | Uint8Array | number[]>('get_framebuffer');
         if (cancelled) return;
         const canvas = canvasRef.current;
         if (!canvas) return;
         const ctx = canvas.getContext('2d');
         if (!ctx) return;
-        const imageData = new ImageData(new Uint8ClampedArray(bytes), GS_FB_WIDTH, GS_FB_HEIGHT);
+        const uint8 = raw instanceof Uint8Array 
+          ? raw 
+          : Array.isArray(raw) 
+            ? new Uint8Array(raw) 
+            : new Uint8Array(raw);
+        const clamped = new Uint8ClampedArray(uint8);
+        const imageData = new ImageData(clamped, GS_FB_WIDTH, GS_FB_HEIGHT);
         ctx.putImageData(imageData, 0, 0);
       } catch (e) {
         // Emulator not booted yet - nothing to draw
+      } finally {
+        inFlightDraw = false;
       }
     };
 
     drawFrame();
-    const interval = setInterval(drawFrame, isRunning ? 100 : 500);
+    const interval = setInterval(drawFrame, isRunning ? 50 : 300);
     return () => {
       cancelled = true;
       clearInterval(interval);
@@ -118,6 +136,8 @@ export default function App() {
         addLog(`Loading ISO from: ${selected}`);
         const result = await invoke<string>('boot_game', { path: selected });
         addLog(`Engine: ${result}`);
+        setIsRunning(true);
+        setActiveTab('display');
       }
     } catch (e) {
       addLog(`Error: ${e}`);

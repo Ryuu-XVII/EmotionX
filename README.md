@@ -20,7 +20,7 @@ EmotionX is an experimental PlayStation 2 emulator featuring a custom-built Rust
 - **Modern UI**: A sleek, dark-themed React UI with real-time logging, telemetry, and debugging tools.
 - **Modular Architecture**: Clean separation of CPU (EE, COP0), Memory (Bus, RAM, BIOS), and Hardware (SIO, Timers).
 
-## 🚀 Progress & Current Status (Phase 24)
+## 🚀 Progress & Current Status (Phase 25)
 We are currently actively developing the core execution loop, boot sequence, and homebrew loading support of the Emotion Engine. 
 - [x] **Phase 1-3**: Project setup, React/Tauri scaffolding, and basic IPC communication.
 - [x] **Phase 4**: Implementation of the MIPS instruction decoder and basic CPU registers.
@@ -43,7 +43,8 @@ We are currently actively developing the core execution loop, boot sequence, and
 - [x] **Phase 22**: Runaway-execution detection auto-pauses when code fetches from unmapped memory.
 - [x] **Phase 23**: Fixed root-cause stack pointer corruption: the real NFS Most Wanted disc image now runs 100 million instructions with zero derailment.
 - [x] **Phase 24**: GS CSR field toggling (60Hz even/odd status), texture/context register parsing (`TEX0`/`TEX1`/`ALPHA`/`SCISSOR`), expanded PS2 kernel syscalls (`AddIntcHandler`/`EnableIntc`/`AddDmacHandler`/`CreateThread`/`GetOsdConfigParam`), MMI `QFSRV` funnel shift, and VU0 matrix transform / clipping (`VCLIP`/`VMULAbc`/`VMADDAbc`/`VIADD`/`VISUB`).
-- [ ] **Phase 25**: TBD
+- [x] **Phase 25**: SIF RPC CDVD sector streaming (`sceCdRead`/`sceCdSearchFile`), DualShock 2 controller HLE (`scePadRead`), GS 4MB VRAM with GIF IMAGE mode (`FLG = 2`), UV/ST textured triangle & sprite rasterization, and VIF1 DMA `DIRECT` 3D pipeline.
+- [ ] **Phase 26**: TBD
 
 ## 🛠️ Getting Started
 

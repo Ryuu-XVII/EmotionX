@@ -6,6 +6,8 @@ pub struct Cop0 {
     pub count: u32,
     pub compare: u32,
     pub bad_vaddr: u32,
+    pub prid: u32,
+    pub error_epc: u32,
 }
 
 impl Cop0 {
@@ -18,6 +20,8 @@ impl Cop0 {
             count: 0,
             compare: 0,
             bad_vaddr: 0,
+            prid: 0x00002E20, // EE Core revision
+            error_epc: 0,
         }
     }
 
@@ -29,7 +33,9 @@ impl Cop0 {
             12 => self.status,
             13 => self.cause,
             14 => self.epc,
+            15 => self.prid,
             16 => self.config,
+            30 => self.error_epc,
             _ => 0,
         }
     }
@@ -46,6 +52,7 @@ impl Cop0 {
             13 => self.cause = val,
             14 => self.epc = val,
             16 => self.config = val,
+            30 => self.error_epc = val,
             _ => {},
         }
     }

@@ -14,7 +14,7 @@ const PVD_SECTOR: u64 = 16;
 
 /// A random-access byte source backing an `Iso9660` reader: either a raw
 /// `.iso` file, or a CHD-compressed image (see `chd_source::ChdSource`).
-pub trait DiscSource {
+pub trait DiscSource: Send {
     fn read_at(&mut self, offset: u64, buf: &mut [u8]) -> Result<(), String>;
 }
 
@@ -26,7 +26,7 @@ impl DiscSource for File {
 }
 
 pub struct Iso9660 {
-    source: Box<dyn DiscSource>,
+    source: Box<dyn DiscSource + Send>,
 }
 
 struct DirEntry {
@@ -44,7 +44,7 @@ impl Iso9660 {
         let mut magic = [0u8; 8];
         let is_chd = probe.read_exact(&mut magic).is_ok() && &magic == b"MComprHD";
 
-        let source: Box<dyn DiscSource> = if is_chd {
+        let source: Box<dyn DiscSource + Send> = if is_chd {
             Box::new(crate::chd_source::ChdSource::open(path)?)
         } else {
             Box::new(File::open(path).map_err(|e| format!("Failed to open disc image: {}", e))?)
@@ -135,6 +135,29 @@ impl Iso9660 {
         }
         data.truncate(entry.size as usize);
         Ok(data)
+    }
+
+    /// Reads `sectors` contiguous 2048-byte sectors starting at `lba` directly into `buf`.
+    pub fn read_sectors(&mut self, lba: u32, sectors: u32, buf: &mut [u8]) -> Result<(), String> {
+        let total_bytes = (sectors as usize) * (SECTOR_SIZE as usize);
+        if buf.len() < total_bytes {
+            return Err(format!("Buffer too small for read_sectors: {} < {}", buf.len(), total_bytes));
+        }
+        for s in 0..sectors {
+            let sector = self.read_sector(lba + s)?;
+            let offset = (s as usize) * (SECTOR_SIZE as usize);
+            buf[offset..offset + (SECTOR_SIZE as usize)].copy_from_slice(&sector);
+        }
+        Ok(())
+    }
+
+    /// Finds a file by path and returns its LBA and size in bytes.
+    pub fn find_file_info(&mut self, path: &str) -> Result<(u32, u32), String> {
+        let entry = self.find_entry(path)?;
+        if entry.is_dir {
+            return Err(format!("'{}' is a directory, not a file", path));
+        }
+        Ok((entry.lba, entry.size))
     }
 }
 

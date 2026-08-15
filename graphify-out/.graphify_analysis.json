@@ -1,38 +1,279 @@
 {
   "communities": {
     "0": [
+      "src_tauri_src_cpu_mmi",
+      "src_tauri_src_cpu_mmi_from_lanes16",
+      "src_tauri_src_cpu_mmi_from_lanes32",
+      "src_tauri_src_cpu_mmi_from_lanes64",
+      "src_tauri_src_cpu_mmi_from_lanes8",
+      "src_tauri_src_cpu_mmi_lanes16",
+      "src_tauri_src_cpu_mmi_lanes32",
+      "src_tauri_src_cpu_mmi_lanes64",
+      "src_tauri_src_cpu_mmi_lanes8",
+      "src_tauri_src_cpu_mmi_pabsh",
+      "src_tauri_src_cpu_mmi_pabsw",
+      "src_tauri_src_cpu_mmi_paddb",
+      "src_tauri_src_cpu_mmi_paddh",
+      "src_tauri_src_cpu_mmi_paddsb",
+      "src_tauri_src_cpu_mmi_paddsh",
+      "src_tauri_src_cpu_mmi_paddsw",
+      "src_tauri_src_cpu_mmi_paddub",
+      "src_tauri_src_cpu_mmi_padduh",
+      "src_tauri_src_cpu_mmi_padduw",
+      "src_tauri_src_cpu_mmi_paddw",
+      "src_tauri_src_cpu_mmi_pand",
+      "src_tauri_src_cpu_mmi_pceqb",
+      "src_tauri_src_cpu_mmi_pceqh",
+      "src_tauri_src_cpu_mmi_pceqw",
+      "src_tauri_src_cpu_mmi_pcgtb",
+      "src_tauri_src_cpu_mmi_pcgth",
+      "src_tauri_src_cpu_mmi_pcgtw",
+      "src_tauri_src_cpu_mmi_pcpyh",
+      "src_tauri_src_cpu_mmi_pcpyld",
+      "src_tauri_src_cpu_mmi_pcpyud",
+      "src_tauri_src_cpu_mmi_pextlb",
+      "src_tauri_src_cpu_mmi_pextlh",
+      "src_tauri_src_cpu_mmi_pextlw",
+      "src_tauri_src_cpu_mmi_pextub",
+      "src_tauri_src_cpu_mmi_pextuh",
+      "src_tauri_src_cpu_mmi_pextuw",
+      "src_tauri_src_cpu_mmi_plzcw",
+      "src_tauri_src_cpu_mmi_pmaxh",
+      "src_tauri_src_cpu_mmi_pmaxw",
+      "src_tauri_src_cpu_mmi_pminh",
+      "src_tauri_src_cpu_mmi_pminw",
+      "src_tauri_src_cpu_mmi_pnor",
+      "src_tauri_src_cpu_mmi_por",
+      "src_tauri_src_cpu_mmi_ppacb",
+      "src_tauri_src_cpu_mmi_ppach",
+      "src_tauri_src_cpu_mmi_ppacw",
+      "src_tauri_src_cpu_mmi_psubb",
+      "src_tauri_src_cpu_mmi_psubh",
+      "src_tauri_src_cpu_mmi_psubsb",
+      "src_tauri_src_cpu_mmi_psubsh",
+      "src_tauri_src_cpu_mmi_psubsw",
+      "src_tauri_src_cpu_mmi_psubub",
+      "src_tauri_src_cpu_mmi_psubuh",
+      "src_tauri_src_cpu_mmi_psubuw",
+      "src_tauri_src_cpu_mmi_psubw",
+      "src_tauri_src_cpu_mmi_pxor",
+      "src_tauri_src_cpu_mmi_qfsrv",
+      "src_tauri_src_cpu_mmi_test_padduw_saturates",
+      "src_tauri_src_cpu_mmi_test_paddw_wraps",
+      "src_tauri_src_cpu_mmi_test_pand_por_pxor_pnor",
+      "src_tauri_src_cpu_mmi_test_pcgtw_mask",
+      "src_tauri_src_cpu_mmi_test_pcpyld_pcpyud",
+      "src_tauri_src_cpu_mmi_test_pextlw_interleaves_low_lanes",
+      "src_tauri_src_cpu_mmi_test_plzcw",
+      "src_tauri_src_cpu_mmi_test_psubsb_saturates_signed",
+      "src_tauri_src_cpu_mmi_test_qfsrv_funnel_shift"
+    ],
+    "1": [
+      "src_tauri_src_cpu_ee",
       "src_tauri_src_cpu_ee_emotionengine",
+      "src_tauri_src_cpu_ee_emotionengine_execute_cop1",
+      "src_tauri_src_cpu_ee_emotionengine_execute_cop2",
+      "src_tauri_src_cpu_ee_emotionengine_execute_mmi",
       "src_tauri_src_cpu_ee_emotionengine_get_reg",
+      "src_tauri_src_cpu_ee_emotionengine_get_reg128",
+      "src_tauri_src_cpu_ee_emotionengine_guard_sp_zero",
+      "src_tauri_src_cpu_ee_emotionengine_handle_syscall",
       "src_tauri_src_cpu_ee_emotionengine_new",
+      "src_tauri_src_cpu_ee_emotionengine_set_fp_condition",
+      "src_tauri_src_cpu_ee_emotionengine_set_pc",
       "src_tauri_src_cpu_ee_emotionengine_set_reg",
+      "src_tauri_src_cpu_ee_emotionengine_set_reg128",
       "src_tauri_src_cpu_ee_emotionengine_step",
+      "src_tauri_src_cpu_ee_emotionengine_trigger_exception",
       "src_tauri_src_cpu_ee_rs_self",
       "src_tauri_src_cpu_ee_rs_string",
+      "src_tauri_src_cpu_ee_test_beql_not_taken_squashes_delay_slot",
+      "src_tauri_src_cpu_ee_test_bgezal_sets_return_address",
+      "src_tauri_src_cpu_ee_test_consecutive_unmapped_fetches_tracks_and_resets",
+      "src_tauri_src_cpu_ee_test_daddiu_lwu_pref",
+      "src_tauri_src_cpu_ee_test_dma_gif_image_upload_and_textured_sprite",
+      "src_tauri_src_cpu_ee_test_dma_gif_plots_pixel",
+      "src_tauri_src_cpu_ee_test_dma_gif_triangle_rasterization",
+      "src_tauri_src_cpu_ee_test_dma_vif1_direct_plots_pixel",
+      "src_tauri_src_cpu_ee_test_fpu_add_s",
+      "src_tauri_src_cpu_ee_test_fpu_max_s_and_madda_s",
+      "src_tauri_src_cpu_ee_test_gs_csr_field_toggle",
+      "src_tauri_src_cpu_ee_test_gs_tex0_and_alpha_packed_writes",
+      "src_tauri_src_cpu_ee_test_hle_puts",
+      "src_tauri_src_cpu_ee_test_intc_and_dmac_syscalls",
+      "src_tauri_src_cpu_ee_test_ld_sd_gs_register",
+      "src_tauri_src_cpu_ee_test_ldl_unaligned",
+      "src_tauri_src_cpu_ee_test_ldr_sdr_roundtrip_aligned",
+      "src_tauri_src_cpu_ee_test_lwl_unaligned",
+      "src_tauri_src_cpu_ee_test_lwr_swr_roundtrip_aligned",
+      "src_tauri_src_cpu_ee_test_madd_accumulates_into_hilo",
+      "src_tauri_src_cpu_ee_test_mmi_padduw_via_decode",
+      "src_tauri_src_cpu_ee_test_mtsah_sets_sa_register",
+      "src_tauri_src_cpu_ee_test_mult1_mfhi1_mflo1",
+      "src_tauri_src_cpu_ee_test_nfs_boot_trace",
+      "src_tauri_src_cpu_ee_test_qfsrv_decode_and_execution",
+      "src_tauri_src_cpu_ee_test_qmtc2_qmfc2_roundtrip",
+      "src_tauri_src_cpu_ee_test_semaphore_syscalls_never_block",
+      "src_tauri_src_cpu_ee_test_sif1_bind_hle_unblocks_client_struct",
+      "src_tauri_src_cpu_ee_test_sif_rpc_call_cdsearchfile_and_read",
+      "src_tauri_src_cpu_ee_test_sif_rpc_call_disk_status",
+      "src_tauri_src_cpu_ee_test_sif_rpc_call_pad_read",
+      "src_tauri_src_cpu_ee_test_sp_never_allowed_to_become_zero",
+      "src_tauri_src_cpu_ee_test_vu0_broadcast_matrix_row_transform",
+      "src_tauri_src_cpu_ee_test_vu0_vclip_and_viadd"
+    ],
+    "2": [
+      "box",
+      "bufreader",
+      "chd",
+      "path",
+      "send",
+      "src_tauri_src_chd_source",
+      "src_tauri_src_chd_source_chdsource",
+      "src_tauri_src_chd_source_chdsource_ensure_hunk_cached",
+      "src_tauri_src_chd_source_chdsource_open",
+      "src_tauri_src_chd_source_chdsource_read_at",
+      "src_tauri_src_chd_source_rs_option",
+      "src_tauri_src_chd_source_rs_result",
+      "src_tauri_src_chd_source_rs_self",
+      "src_tauri_src_chd_source_rs_string",
+      "src_tauri_src_chd_source_rs_vec",
+      "src_tauri_src_iso9660",
+      "src_tauri_src_iso9660_build_dir_record",
+      "src_tauri_src_iso9660_build_synthetic_iso",
+      "src_tauri_src_iso9660_direntry",
+      "src_tauri_src_iso9660_discsource",
+      "src_tauri_src_iso9660_file",
+      "src_tauri_src_iso9660_file_read_at",
+      "src_tauri_src_iso9660_iso9660",
+      "src_tauri_src_iso9660_iso9660_find_entry",
+      "src_tauri_src_iso9660_iso9660_find_file_info",
+      "src_tauri_src_iso9660_iso9660_list_dir",
+      "src_tauri_src_iso9660_iso9660_open",
+      "src_tauri_src_iso9660_iso9660_read_file",
+      "src_tauri_src_iso9660_iso9660_read_sector",
+      "src_tauri_src_iso9660_iso9660_read_sectors",
+      "src_tauri_src_iso9660_iso9660_root_dir",
+      "src_tauri_src_iso9660_parse_boot_path",
+      "src_tauri_src_iso9660_parse_dir_record",
+      "src_tauri_src_iso9660_rs_option",
+      "src_tauri_src_iso9660_rs_result",
+      "src_tauri_src_iso9660_rs_self",
+      "src_tauri_src_iso9660_rs_string",
+      "src_tauri_src_iso9660_rs_vec",
+      "src_tauri_src_iso9660_strip_version",
+      "src_tauri_src_iso9660_test_parse_boot_path",
+      "src_tauri_src_iso9660_test_strip_version",
+      "src_tauri_src_iso9660_test_synthetic_iso_boot_extraction"
+    ],
+    "3": [
+      "src_tauri_src_hw_dmac",
+      "src_tauri_src_hw_dmac_channel",
+      "src_tauri_src_hw_dmac_dmac",
+      "src_tauri_src_hw_dmac_dmac_clear_str",
+      "src_tauri_src_hw_dmac_dmac_find_channel",
+      "src_tauri_src_hw_dmac_dmac_is_dmac_addr",
+      "src_tauri_src_hw_dmac_dmac_new",
+      "src_tauri_src_hw_dmac_dmac_read_reg",
+      "src_tauri_src_hw_dmac_dmac_write_reg",
+      "src_tauri_src_hw_dmac_rs_option",
+      "src_tauri_src_hw_dmac_rs_self",
       "src_tauri_src_hw_mod",
       "src_tauri_src_hw_mod_hardware",
+      "src_tauri_src_hw_mod_hardware_check_interrupts",
       "src_tauri_src_hw_mod_hardware_new",
       "src_tauri_src_hw_mod_hardware_read32",
+      "src_tauri_src_hw_mod_hardware_read8",
+      "src_tauri_src_hw_mod_hardware_trigger_irq",
       "src_tauri_src_hw_mod_hardware_write32",
+      "src_tauri_src_hw_mod_hardware_write8",
+      "src_tauri_src_hw_mod_rs_option",
       "src_tauri_src_hw_mod_rs_self",
-      "src_tauri_src_memory_bus",
+      "src_tauri_src_hw_sio",
+      "src_tauri_src_hw_sio_rs_self",
+      "src_tauri_src_hw_sio_rs_string",
+      "src_tauri_src_hw_sio_rs_vec",
+      "src_tauri_src_hw_sio_sio",
+      "src_tauri_src_hw_sio_sio_new",
+      "src_tauri_src_hw_sio_sio_read32",
+      "src_tauri_src_hw_sio_sio_read8",
+      "src_tauri_src_hw_sio_sio_write32",
+      "src_tauri_src_hw_sio_sio_write8",
+      "src_tauri_src_hw_timer",
+      "src_tauri_src_hw_timer_rs_self",
+      "src_tauri_src_hw_timer_timer",
+      "src_tauri_src_hw_timer_timers",
+      "src_tauri_src_hw_timer_timers_new",
+      "src_tauri_src_hw_timer_timers_read32",
+      "src_tauri_src_hw_timer_timers_tick",
+      "src_tauri_src_hw_timer_timers_write32",
+      "src_tauri_src_memory_bus"
+    ],
+    "4": [
+      "src_tauri_src_elf_loader",
+      "src_tauri_src_elf_loader_load_elf",
+      "src_tauri_src_elf_loader_load_elf_bytes",
+      "src_tauri_src_elf_loader_rs_result",
+      "src_tauri_src_elf_loader_rs_string",
+      "src_tauri_src_elf_loader_test_load_elf",
       "src_tauri_src_memory_bus_bus",
+      "src_tauri_src_memory_bus_bus_attach_iso",
+      "src_tauri_src_memory_bus_bus_execute_dma",
+      "src_tauri_src_memory_bus_bus_handle_sif1_packet",
+      "src_tauri_src_memory_bus_bus_handle_sif_rpc_call",
+      "src_tauri_src_memory_bus_bus_handle_vif1_packet",
+      "src_tauri_src_memory_bus_bus_is_code_mapped",
       "src_tauri_src_memory_bus_bus_new",
+      "src_tauri_src_memory_bus_bus_read128",
       "src_tauri_src_memory_bus_bus_read16",
       "src_tauri_src_memory_bus_bus_read32",
+      "src_tauri_src_memory_bus_bus_read64",
       "src_tauri_src_memory_bus_bus_read8",
+      "src_tauri_src_memory_bus_bus_read_string",
+      "src_tauri_src_memory_bus_bus_write128",
       "src_tauri_src_memory_bus_bus_write16",
       "src_tauri_src_memory_bus_bus_write32",
+      "src_tauri_src_memory_bus_bus_write64",
       "src_tauri_src_memory_bus_bus_write8",
+      "src_tauri_src_memory_bus_rs_option",
       "src_tauri_src_memory_bus_rs_self",
+      "src_tauri_src_memory_bus_rs_string",
       "src_tauri_src_memory_bus_rs_vec",
       "src_tauri_trace",
       "src_tauri_trace_main"
     ],
-    "1": [
-      "ref_dom",
-      "ref_dom_iterable",
-      "ref_es2020",
-      "ref_src",
+    "5": [
+      "package",
+      "package_dependencies",
+      "package_dependencies_framer_motion",
+      "package_dependencies_lucide_react",
+      "package_dependencies_react",
+      "package_dependencies_react_dom",
+      "package_dependencies_tauri_apps_api",
+      "package_dependencies_tauri_apps_plugin_dialog",
+      "package_dependencies_tauri_apps_plugin_opener",
+      "package_devdependencies",
+      "package_devdependencies_autoprefixer",
+      "package_devdependencies_postcss",
+      "package_devdependencies_tailwindcss",
+      "package_devdependencies_tailwindcss_vite",
+      "package_devdependencies_tauri_apps_cli",
+      "package_devdependencies_types_react",
+      "package_devdependencies_types_react_dom",
+      "package_devdependencies_typescript",
+      "package_devdependencies_vite",
+      "package_devdependencies_vitejs_plugin_react",
+      "package_name",
+      "package_private",
+      "package_scripts",
+      "package_scripts_build",
+      "package_scripts_dev",
+      "package_scripts_preview",
+      "package_scripts_tauri",
+      "package_type",
+      "package_version"
+    ],
+    "6": [
       "tsconfig",
       "tsconfig_compileroptions",
       "tsconfig_compileroptions_allowimportingtsextensions",
@@ -53,48 +294,100 @@
       "tsconfig_include",
       "tsconfig_references"
     ],
-    "2": [
-      "autoprefixer",
-      "package_devdependencies",
-      "package_devdependencies_autoprefixer",
-      "package_devdependencies_postcss",
-      "package_devdependencies_tailwindcss",
-      "package_devdependencies_tailwindcss_vite",
-      "package_devdependencies_tauri_apps_cli",
-      "package_devdependencies_types_react",
-      "package_devdependencies_types_react_dom",
-      "package_devdependencies_typescript",
-      "package_devdependencies_vite",
-      "package_devdependencies_vitejs_plugin_react",
-      "postcss",
-      "tailwindcss",
-      "tailwindcss_vite",
-      "tauri_apps_cli",
-      "types_react",
-      "types_react_dom",
-      "typescript",
-      "vite",
-      "vitejs_plugin_react"
+    "7": [
+      "src_tauri_src_hw_gs",
+      "src_tauri_src_hw_gs_gs",
+      "src_tauri_src_hw_gs_gs_draw_line",
+      "src_tauri_src_hw_gs_gs_draw_sprite",
+      "src_tauri_src_hw_gs_gs_draw_triangle",
+      "src_tauri_src_hw_gs_gs_kick_vertex",
+      "src_tauri_src_hw_gs_gs_new",
+      "src_tauri_src_hw_gs_gs_plot_pixel",
+      "src_tauri_src_hw_gs_gs_read64",
+      "src_tauri_src_hw_gs_gs_receive_gif_data",
+      "src_tauri_src_hw_gs_gs_sample_texture",
+      "src_tauri_src_hw_gs_gs_set_prim",
+      "src_tauri_src_hw_gs_gs_toggle_vblank",
+      "src_tauri_src_hw_gs_gs_write64",
+      "src_tauri_src_hw_gs_gs_write_packed_register",
+      "src_tauri_src_hw_gs_rs_self",
+      "src_tauri_src_hw_gs_rs_vec",
+      "src_tauri_src_hw_gs_vertex"
     ],
-    "3": [
-      "framer_motion",
-      "lucide_react",
-      "package_dependencies",
-      "package_dependencies_framer_motion",
-      "package_dependencies_lucide_react",
-      "package_dependencies_react",
-      "package_dependencies_react_dom",
-      "package_dependencies_tauri_apps_api",
-      "package_dependencies_tauri_apps_plugin_dialog",
-      "package_dependencies_tauri_apps_plugin_opener",
-      "react",
-      "react_dom",
-      "tauri_apps_api",
-      "tauri_apps_plugin_dialog",
-      "tauri_apps_plugin_opener"
+    "8": [
+      "src_tauri_tauri_conf",
+      "src_tauri_tauri_conf_app",
+      "src_tauri_tauri_conf_app_security",
+      "src_tauri_tauri_conf_app_windows",
+      "src_tauri_tauri_conf_build",
+      "src_tauri_tauri_conf_build_beforebuildcommand",
+      "src_tauri_tauri_conf_build_beforedevcommand",
+      "src_tauri_tauri_conf_build_devurl",
+      "src_tauri_tauri_conf_build_frontenddist",
+      "src_tauri_tauri_conf_bundle",
+      "src_tauri_tauri_conf_bundle_active",
+      "src_tauri_tauri_conf_bundle_icon",
+      "src_tauri_tauri_conf_bundle_targets",
+      "src_tauri_tauri_conf_identifier",
+      "src_tauri_tauri_conf_productname",
+      "src_tauri_tauri_conf_schema",
+      "src_tauri_tauri_conf_security_csp",
+      "src_tauri_tauri_conf_version"
     ],
-    "4": [
-      "src_tauri_src_cpu_ee",
+    "9": [
+      "apphandle",
+      "mutex",
+      "response",
+      "src_tauri_src_lib",
+      "src_tauri_src_lib_boot_game",
+      "src_tauri_src_lib_emulatorstate",
+      "src_tauri_src_lib_get_framebuffer",
+      "src_tauri_src_lib_get_status",
+      "src_tauri_src_lib_load_elf",
+      "src_tauri_src_lib_rs_option",
+      "src_tauri_src_lib_rs_result",
+      "src_tauri_src_lib_rs_string",
+      "src_tauri_src_lib_rs_vec",
+      "src_tauri_src_lib_run",
+      "src_tauri_src_lib_run_cpu_batch",
+      "src_tauri_src_lib_step_cpu",
+      "state"
+    ],
+    "10": [
+      "src_tauri_gen_schemas_desktop_schema",
+      "src_tauri_gen_schemas_desktop_schema_anyof",
+      "src_tauri_gen_schemas_desktop_schema_application_anyof",
+      "src_tauri_gen_schemas_desktop_schema_application_description",
+      "src_tauri_gen_schemas_desktop_schema_definitions",
+      "src_tauri_gen_schemas_desktop_schema_definitions_application",
+      "src_tauri_gen_schemas_desktop_schema_definitions_target",
+      "src_tauri_gen_schemas_desktop_schema_definitions_value",
+      "src_tauri_gen_schemas_desktop_schema_description",
+      "src_tauri_gen_schemas_desktop_schema_schema",
+      "src_tauri_gen_schemas_desktop_schema_target_description",
+      "src_tauri_gen_schemas_desktop_schema_target_oneof",
+      "src_tauri_gen_schemas_desktop_schema_title",
+      "src_tauri_gen_schemas_desktop_schema_value_anyof",
+      "src_tauri_gen_schemas_desktop_schema_value_description"
+    ],
+    "11": [
+      "src_tauri_gen_schemas_windows_schema",
+      "src_tauri_gen_schemas_windows_schema_anyof",
+      "src_tauri_gen_schemas_windows_schema_application_anyof",
+      "src_tauri_gen_schemas_windows_schema_application_description",
+      "src_tauri_gen_schemas_windows_schema_definitions",
+      "src_tauri_gen_schemas_windows_schema_definitions_application",
+      "src_tauri_gen_schemas_windows_schema_definitions_target",
+      "src_tauri_gen_schemas_windows_schema_definitions_value",
+      "src_tauri_gen_schemas_windows_schema_description",
+      "src_tauri_gen_schemas_windows_schema_schema",
+      "src_tauri_gen_schemas_windows_schema_target_description",
+      "src_tauri_gen_schemas_windows_schema_target_oneof",
+      "src_tauri_gen_schemas_windows_schema_title",
+      "src_tauri_gen_schemas_windows_schema_value_anyof",
+      "src_tauri_gen_schemas_windows_schema_value_description"
+    ],
+    "12": [
       "src_tauri_src_cpu_instruction",
       "src_tauri_src_cpu_instruction_instruction",
       "src_tauri_src_cpu_instruction_instruction_funct",
@@ -109,63 +402,107 @@
       "src_tauri_src_cpu_instruction_instruction_shamt",
       "src_tauri_src_cpu_instruction_rs_self"
     ],
-    "5": [
-      "src_tauri_tauri_conf",
-      "src_tauri_tauri_conf_app",
-      "src_tauri_tauri_conf_app_security",
-      "src_tauri_tauri_conf_app_windows",
-      "src_tauri_tauri_conf_build",
-      "src_tauri_tauri_conf_build_beforebuildcommand",
-      "src_tauri_tauri_conf_build_beforedevcommand",
-      "src_tauri_tauri_conf_build_devurl",
-      "src_tauri_tauri_conf_build_frontenddist",
-      "src_tauri_tauri_conf_identifier",
-      "src_tauri_tauri_conf_productname",
-      "src_tauri_tauri_conf_schema",
-      "src_tauri_tauri_conf_security_csp",
-      "src_tauri_tauri_conf_version"
+    "13": [
+      "src_tauri_gen_schemas_desktop_schema_items_ref",
+      "src_tauri_gen_schemas_desktop_schema_permissions_description",
+      "src_tauri_gen_schemas_desktop_schema_permissions_items",
+      "src_tauri_gen_schemas_desktop_schema_permissions_type",
+      "src_tauri_gen_schemas_desktop_schema_permissions_uniqueitems",
+      "src_tauri_gen_schemas_desktop_schema_platforms_description",
+      "src_tauri_gen_schemas_desktop_schema_platforms_items",
+      "src_tauri_gen_schemas_desktop_schema_platforms_type",
+      "src_tauri_gen_schemas_desktop_schema_properties_permissions",
+      "src_tauri_gen_schemas_desktop_schema_properties_platforms"
     ],
-    "6": [
-      "mutex",
-      "option",
-      "result",
-      "src_tauri_src_lib",
-      "src_tauri_src_lib_boot_game",
-      "src_tauri_src_lib_emulatorstate",
-      "src_tauri_src_lib_get_status",
-      "src_tauri_src_lib_rs_string",
-      "src_tauri_src_lib_rs_vec",
-      "src_tauri_src_lib_run",
-      "src_tauri_src_lib_run_cpu_batch",
-      "src_tauri_src_lib_step_cpu",
-      "state"
+    "14": [
+      "src_tauri_gen_schemas_desktop_schema_items_type",
+      "src_tauri_gen_schemas_desktop_schema_properties_webviews",
+      "src_tauri_gen_schemas_desktop_schema_properties_windows",
+      "src_tauri_gen_schemas_desktop_schema_urls_items",
+      "src_tauri_gen_schemas_desktop_schema_webviews_description",
+      "src_tauri_gen_schemas_desktop_schema_webviews_items",
+      "src_tauri_gen_schemas_desktop_schema_webviews_type",
+      "src_tauri_gen_schemas_desktop_schema_windows_description",
+      "src_tauri_gen_schemas_desktop_schema_windows_items",
+      "src_tauri_gen_schemas_desktop_schema_windows_type"
     ],
-    "7": [
-      "package",
-      "package_name",
-      "package_private",
-      "package_scripts",
-      "package_scripts_build",
-      "package_scripts_dev",
-      "package_scripts_preview",
-      "package_scripts_tauri",
-      "package_type",
-      "package_version"
+    "15": [
+      "src_tauri_gen_schemas_windows_schema_items_ref",
+      "src_tauri_gen_schemas_windows_schema_permissions_description",
+      "src_tauri_gen_schemas_windows_schema_permissions_items",
+      "src_tauri_gen_schemas_windows_schema_permissions_type",
+      "src_tauri_gen_schemas_windows_schema_permissions_uniqueitems",
+      "src_tauri_gen_schemas_windows_schema_platforms_description",
+      "src_tauri_gen_schemas_windows_schema_platforms_items",
+      "src_tauri_gen_schemas_windows_schema_platforms_type",
+      "src_tauri_gen_schemas_windows_schema_properties_permissions",
+      "src_tauri_gen_schemas_windows_schema_properties_platforms"
     ],
-    "8": [
-      "ref_core_default",
-      "ref_dialog_default",
-      "ref_main",
-      "ref_opener_default",
-      "src_tauri_capabilities_default",
-      "src_tauri_capabilities_default_description",
-      "src_tauri_capabilities_default_identifier",
-      "src_tauri_capabilities_default_permissions",
-      "src_tauri_capabilities_default_schema",
-      "src_tauri_capabilities_default_windows"
+    "16": [
+      "src_tauri_gen_schemas_windows_schema_items_type",
+      "src_tauri_gen_schemas_windows_schema_properties_webviews",
+      "src_tauri_gen_schemas_windows_schema_properties_windows",
+      "src_tauri_gen_schemas_windows_schema_urls_items",
+      "src_tauri_gen_schemas_windows_schema_webviews_description",
+      "src_tauri_gen_schemas_windows_schema_webviews_items",
+      "src_tauri_gen_schemas_windows_schema_webviews_type",
+      "src_tauri_gen_schemas_windows_schema_windows_description",
+      "src_tauri_gen_schemas_windows_schema_windows_items",
+      "src_tauri_gen_schemas_windows_schema_windows_type"
     ],
-    "9": [
-      "ref_vite_config_ts",
+    "17": [
+      "src_tauri_gen_schemas_desktop_schema_capability_properties",
+      "src_tauri_gen_schemas_desktop_schema_definitions_identifier",
+      "src_tauri_gen_schemas_desktop_schema_identifier_description",
+      "src_tauri_gen_schemas_desktop_schema_identifier_oneof",
+      "src_tauri_gen_schemas_desktop_schema_identifier_type",
+      "src_tauri_gen_schemas_desktop_schema_properties_identifier",
+      "src_tauri_gen_schemas_desktop_schema_properties_remote",
+      "src_tauri_gen_schemas_desktop_schema_remote_anyof",
+      "src_tauri_gen_schemas_desktop_schema_remote_description"
+    ],
+    "18": [
+      "src_tauri_gen_schemas_windows_schema_capability_properties",
+      "src_tauri_gen_schemas_windows_schema_definitions_identifier",
+      "src_tauri_gen_schemas_windows_schema_identifier_description",
+      "src_tauri_gen_schemas_windows_schema_identifier_oneof",
+      "src_tauri_gen_schemas_windows_schema_identifier_type",
+      "src_tauri_gen_schemas_windows_schema_properties_identifier",
+      "src_tauri_gen_schemas_windows_schema_properties_remote",
+      "src_tauri_gen_schemas_windows_schema_remote_anyof",
+      "src_tauri_gen_schemas_windows_schema_remote_description"
+    ],
+    "19": [
+      "src_tauri_gen_schemas_desktop_schema_capabilityremote_description",
+      "src_tauri_gen_schemas_desktop_schema_capabilityremote_properties",
+      "src_tauri_gen_schemas_desktop_schema_capabilityremote_required",
+      "src_tauri_gen_schemas_desktop_schema_capabilityremote_type",
+      "src_tauri_gen_schemas_desktop_schema_definitions_capabilityremote",
+      "src_tauri_gen_schemas_desktop_schema_properties_urls",
+      "src_tauri_gen_schemas_desktop_schema_urls_description",
+      "src_tauri_gen_schemas_desktop_schema_urls_type"
+    ],
+    "20": [
+      "src_tauri_gen_schemas_windows_schema_capabilityremote_description",
+      "src_tauri_gen_schemas_windows_schema_capabilityremote_properties",
+      "src_tauri_gen_schemas_windows_schema_capabilityremote_required",
+      "src_tauri_gen_schemas_windows_schema_capabilityremote_type",
+      "src_tauri_gen_schemas_windows_schema_definitions_capabilityremote",
+      "src_tauri_gen_schemas_windows_schema_properties_urls",
+      "src_tauri_gen_schemas_windows_schema_urls_description",
+      "src_tauri_gen_schemas_windows_schema_urls_type"
+    ],
+    "21": [
+      "src_tauri_src_cpu_vu0",
+      "src_tauri_src_cpu_vu0_rs_self",
+      "src_tauri_src_cpu_vu0_vu0",
+      "src_tauri_src_cpu_vu0_vu0_get_vf",
+      "src_tauri_src_cpu_vu0_vu0_get_vi",
+      "src_tauri_src_cpu_vu0_vu0_new",
+      "src_tauri_src_cpu_vu0_vu0_set_vf_masked",
+      "src_tauri_src_cpu_vu0_vu0_set_vi"
+    ],
+    "22": [
       "tsconfig_node",
       "tsconfig_node_compileroptions",
       "tsconfig_node_compileroptions_allowsyntheticdefaultimports",
@@ -175,17 +512,7 @@
       "tsconfig_node_compileroptions_skiplibcheck",
       "tsconfig_node_include"
     ],
-    "10": [
-      "ref_icons_128x128_2x_png",
-      "ref_icons_128x128_png",
-      "ref_icons_32x32_png",
-      "ref_icons_icon_ico",
-      "src_tauri_tauri_conf_bundle",
-      "src_tauri_tauri_conf_bundle_active",
-      "src_tauri_tauri_conf_bundle_icon",
-      "src_tauri_tauri_conf_bundle_targets"
-    ],
-    "11": [
+    "23": [
       "src_app",
       "src_app_app",
       "src_app_mock_games",
@@ -193,106 +520,213 @@
       "src_app_settingstab",
       "src_main"
     ],
-    "12": [
+    "24": [
+      "src_tauri_capabilities_default",
+      "src_tauri_capabilities_default_description",
+      "src_tauri_capabilities_default_identifier",
+      "src_tauri_capabilities_default_permissions",
+      "src_tauri_capabilities_default_schema",
+      "src_tauri_capabilities_default_windows"
+    ],
+    "25": [
+      "src_tauri_src_cpu_cop0",
+      "src_tauri_src_cpu_cop0_cop0",
+      "src_tauri_src_cpu_cop0_cop0_new",
+      "src_tauri_src_cpu_cop0_cop0_read_reg",
+      "src_tauri_src_cpu_cop0_cop0_write_reg",
+      "src_tauri_src_cpu_cop0_rs_self"
+    ],
+    "26": [
+      "src_tauri_gen_schemas_desktop_schema_capability_description",
+      "src_tauri_gen_schemas_desktop_schema_capability_required",
+      "src_tauri_gen_schemas_desktop_schema_capability_type",
+      "src_tauri_gen_schemas_desktop_schema_definitions_capability"
+    ],
+    "27": [
+      "src_tauri_gen_schemas_desktop_schema_description_default",
+      "src_tauri_gen_schemas_desktop_schema_description_description",
+      "src_tauri_gen_schemas_desktop_schema_description_type",
+      "src_tauri_gen_schemas_desktop_schema_properties_description"
+    ],
+    "28": [
+      "src_tauri_gen_schemas_desktop_schema_local_default",
+      "src_tauri_gen_schemas_desktop_schema_local_description",
+      "src_tauri_gen_schemas_desktop_schema_local_type",
+      "src_tauri_gen_schemas_desktop_schema_properties_local"
+    ],
+    "29": [
+      "src_tauri_gen_schemas_windows_schema_capability_description",
+      "src_tauri_gen_schemas_windows_schema_capability_required",
+      "src_tauri_gen_schemas_windows_schema_capability_type",
+      "src_tauri_gen_schemas_windows_schema_definitions_capability"
+    ],
+    "30": [
+      "src_tauri_gen_schemas_windows_schema_description_default",
+      "src_tauri_gen_schemas_windows_schema_description_description",
+      "src_tauri_gen_schemas_windows_schema_description_type",
+      "src_tauri_gen_schemas_windows_schema_properties_description"
+    ],
+    "31": [
+      "src_tauri_gen_schemas_windows_schema_local_default",
+      "src_tauri_gen_schemas_windows_schema_local_description",
+      "src_tauri_gen_schemas_windows_schema_local_type",
+      "src_tauri_gen_schemas_windows_schema_properties_local"
+    ],
+    "32": [
+      "src_tauri_gen_schemas_desktop_schema_definitions_number",
+      "src_tauri_gen_schemas_desktop_schema_number_anyof",
+      "src_tauri_gen_schemas_desktop_schema_number_description"
+    ],
+    "33": [
+      "src_tauri_gen_schemas_desktop_schema_definitions_permissionentry",
+      "src_tauri_gen_schemas_desktop_schema_permissionentry_anyof",
+      "src_tauri_gen_schemas_desktop_schema_permissionentry_description"
+    ],
+    "34": [
+      "src_tauri_gen_schemas_windows_schema_definitions_number",
+      "src_tauri_gen_schemas_windows_schema_number_anyof",
+      "src_tauri_gen_schemas_windows_schema_number_description"
+    ],
+    "35": [
+      "src_tauri_gen_schemas_windows_schema_definitions_permissionentry",
+      "src_tauri_gen_schemas_windows_schema_permissionentry_anyof",
+      "src_tauri_gen_schemas_windows_schema_permissionentry_description"
+    ],
+    "36": [
       "src_tauri_build",
       "src_tauri_build_main"
     ],
-    "13": [
+    "37": [
       "src_tauri_src_main",
       "src_tauri_src_main_main"
     ],
-    "14": [
+    "38": [
       "src_tauri_src_cpu_mod"
     ],
-    "15": [
+    "39": [
       "src_tauri_src_memory_mod"
     ],
-    "16": [
+    "40": [
       "src_vite_env_d"
     ],
-    "17": [
+    "41": [
       "vite_config"
     ]
   },
   "cohesion": {
-    "0": 0.09538461538461539,
-    "1": 0.08695652173913043,
-    "2": 0.09523809523809523,
-    "3": 0.13333333333333333,
-    "4": 0.15384615384615385,
-    "5": 0.14285714285714285,
-    "6": 0.32051282051282054,
-    "7": 0.2,
-    "8": 0.2,
-    "9": 0.2222222222222222,
-    "10": 0.25,
-    "11": 0.3333333333333333,
-    "12": 1.0,
-    "13": 1.0,
-    "14": 1.0,
-    "15": 1.0,
-    "16": 1.0,
-    "17": 1.0
+    "0": 0.075990675990676,
+    "1": 0.138763197586727,
+    "2": 0.1091753774680604,
+    "3": 0.05853658536585366,
+    "4": 0.10752688172043011,
+    "5": 0.06896551724137931,
+    "6": 0.10526315789473684,
+    "7": 0.21568627450980393,
+    "8": 0.1111111111111111,
+    "9": 0.27941176470588236,
+    "10": 0.13333333333333333,
+    "11": 0.13333333333333333,
+    "12": 0.16666666666666666,
+    "13": 0.2,
+    "14": 0.2,
+    "15": 0.2,
+    "16": 0.2,
+    "17": 0.2222222222222222,
+    "18": 0.2222222222222222,
+    "19": 0.25,
+    "20": 0.25,
+    "21": 0.25,
+    "22": 0.25,
+    "23": 0.3333333333333333,
+    "24": 0.3333333333333333,
+    "25": 0.3333333333333333,
+    "26": 0.5,
+    "27": 0.5,
+    "28": 0.5,
+    "29": 0.5,
+    "30": 0.5,
+    "31": 0.5,
+    "32": 0.6666666666666666,
+    "33": 0.6666666666666666,
+    "34": 0.6666666666666666,
+    "35": 0.6666666666666666,
+    "36": 1.0,
+    "37": 1.0,
+    "38": 1.0,
+    "39": 1.0,
+    "40": 1.0,
+    "41": 1.0
   },
   "gods": [
+    {
+      "id": "src_tauri_src_memory_bus_bus",
+      "label": "Bus",
+      "degree": 29
+    },
+    {
+      "id": "src_tauri_src_cpu_ee_emotionengine",
+      "label": "EmotionEngine",
+      "degree": 23
+    },
+    {
+      "id": "src_tauri_src_cpu_mmi_from_lanes32",
+      "label": "from_lanes32()",
+      "degree": 21
+    },
+    {
+      "id": "src_tauri_src_cpu_mmi_lanes32",
+      "label": "lanes32()",
+      "degree": 17
+    },
+    {
+      "id": "src_tauri_src_hw_gs_gs",
+      "label": "Gs",
+      "degree": 17
+    },
+    {
+      "id": "src_tauri_src_cpu_mmi_lanes16",
+      "label": "lanes16()",
+      "degree": 16
+    },
+    {
+      "id": "src_tauri_src_cpu_mmi_from_lanes16",
+      "label": "from_lanes16()",
+      "degree": 16
+    },
     {
       "id": "tsconfig_compileroptions",
       "label": "compilerOptions",
       "degree": 16
     },
     {
-      "id": "src_tauri_src_memory_bus_bus",
-      "label": "Bus",
-      "degree": 15
-    },
-    {
       "id": "src_tauri_src_cpu_instruction_instruction",
       "label": "Instruction",
-      "degree": 11
-    },
-    {
-      "id": "src_tauri_src_cpu_ee_emotionengine",
-      "label": "EmotionEngine",
-      "degree": 9
-    },
-    {
-      "id": "src_tauri_src_lib_emulatorstate",
-      "label": "EmulatorState",
-      "degree": 8
+      "degree": 15
     },
     {
       "id": "src_tauri_src_hw_mod_hardware",
       "label": "Hardware",
-      "degree": 6
-    },
-    {
-      "id": "src_tauri_src_lib_run_cpu_batch",
-      "label": "run_cpu_batch()",
-      "degree": 6
-    },
-    {
-      "id": "tsconfig_node_compileroptions",
-      "label": "compilerOptions",
-      "degree": 6
-    },
-    {
-      "id": "package_scripts",
-      "label": "scripts",
-      "degree": 5
-    },
-    {
-      "id": "src_tauri_src_lib_step_cpu",
-      "label": "step_cpu()",
-      "degree": 5
+      "degree": 15
     }
   ],
   "surprises": [
     {
-      "source": "EmulatorState",
-      "target": "EmotionEngine",
+      "source": "EmotionEngine",
+      "target": "Cop0",
       "source_files": [
-        "src-tauri/src/lib.rs",
-        "src-tauri/src/cpu/ee.rs"
+        "src-tauri/src/cpu/ee.rs",
+        "src-tauri/src/cpu/cop0.rs"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "references",
+      "why": "bridges separate communities"
+    },
+    {
+      "source": "EmotionEngine",
+      "target": "Vu0",
+      "source_files": [
+        "src-tauri/src/cpu/ee.rs",
+        "src-tauri/src/cpu/vu0.rs"
       ],
       "confidence": "EXTRACTED",
       "relation": "references",
@@ -307,55 +741,66 @@
       ],
       "confidence": "EXTRACTED",
       "relation": "references",
-      "why": "cross-file semantic connection"
+      "why": "bridges separate communities"
     },
     {
-      "source": "Bus",
-      "target": "Hardware",
+      "source": "load_elf()",
+      "target": "EmotionEngine",
       "source_files": [
-        "src-tauri/src/memory/bus.rs",
-        "src-tauri/src/hw/mod.rs"
+        "src-tauri/src/elf_loader.rs",
+        "src-tauri/src/cpu/ee.rs"
       ],
       "confidence": "EXTRACTED",
       "relation": "references",
-      "why": "cross-file semantic connection"
+      "why": "bridges separate communities"
+    },
+    {
+      "source": "load_elf_bytes()",
+      "target": "EmotionEngine",
+      "source_files": [
+        "src-tauri/src/elf_loader.rs",
+        "src-tauri/src/cpu/ee.rs"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "references",
+      "why": "bridges separate communities"
     }
   ],
   "questions": [
     {
       "type": "bridge_node",
-      "question": "Why does `Bus` connect `Bus` to `Instruction`, `lib.rs`?",
-      "why": "High betweenness centrality (0.051) - this node is a cross-community bridge."
+      "question": "Why does `Bus` connect `Community 4` to `Community 1`, `Community 2`, `Community 3`, `Community 9`?",
+      "why": "High betweenness centrality (0.130) - this node is a cross-community bridge."
     },
     {
       "type": "bridge_node",
-      "question": "Why does `devDependencies` connect `devDependencies` to `package.json`?",
-      "why": "High betweenness centrality (0.044) - this node is a cross-community bridge."
+      "question": "Why does `Hardware` connect `Community 3` to `Community 4`, `Community 7`?",
+      "why": "High betweenness centrality (0.079) - this node is a cross-community bridge."
     },
     {
       "type": "bridge_node",
-      "question": "Why does `dependencies` connect `dependencies` to `package.json`?",
-      "why": "High betweenness centrality (0.034) - this node is a cross-community bridge."
+      "question": "Why does `Iso9660` connect `Community 2` to `Community 4`?",
+      "why": "High betweenness centrality (0.057) - this node is a cross-community bridge."
     },
     {
       "type": "isolated_nodes",
       "question": "What connects `name`, `private`, `version` to the rest of the system?",
-      "why": "74 weakly-connected nodes found - possible documentation gaps or missing edges."
+      "why": "149 weakly-connected nodes found - possible documentation gaps or missing edges."
     },
     {
       "type": "low_cohesion",
-      "question": "Should `Bus` be split into smaller, more focused modules?",
-      "why": "Cohesion score 0.09538461538461539 - nodes in this community are weakly interconnected."
+      "question": "Should `Community 0` be split into smaller, more focused modules?",
+      "why": "Cohesion score 0.075990675990676 - nodes in this community are weakly interconnected."
     },
     {
       "type": "low_cohesion",
-      "question": "Should `compilerOptions` be split into smaller, more focused modules?",
-      "why": "Cohesion score 0.08695652173913043 - nodes in this community are weakly interconnected."
+      "question": "Should `Community 1` be split into smaller, more focused modules?",
+      "why": "Cohesion score 0.138763197586727 - nodes in this community are weakly interconnected."
     },
     {
       "type": "low_cohesion",
-      "question": "Should `devDependencies` be split into smaller, more focused modules?",
-      "why": "Cohesion score 0.09523809523809523 - nodes in this community are weakly interconnected."
+      "question": "Should `Community 2` be split into smaller, more focused modules?",
+      "why": "Cohesion score 0.1091753774680604 - nodes in this community are weakly interconnected."
     }
   ]
 }

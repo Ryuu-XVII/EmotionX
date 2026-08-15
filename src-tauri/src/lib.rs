@@ -43,6 +43,7 @@ fn boot_game(path: &str, state: State<'_, EmulatorState>) -> Result<String, Stri
     let elf_bytes = iso.read_file(&boot_path)?;
     let entry = elf_loader::load_elf_bytes(&elf_bytes, &mut ee)?;
     ee.set_pc(entry);
+    ee.bus.attach_iso(iso);
 
     *engine = Some(ee);
 
@@ -75,8 +76,8 @@ fn run_cpu_batch(steps: u32, app: tauri::AppHandle, state: State<'_, EmulatorSta
         for i in 0..steps {
             let log = ee.step();
 
-            // Only keep the last 20 logs to avoid sending massive arrays over IPC
-            if i >= steps.saturating_sub(20) {
+            // Only keep the last 5 logs to avoid sending massive arrays over IPC
+            if i >= steps.saturating_sub(5) {
                 last_logs.push(log);
             }
 
@@ -87,7 +88,7 @@ fn run_cpu_batch(steps: u32, app: tauri::AppHandle, state: State<'_, EmulatorSta
         }
 
         let pending = std::mem::take(&mut ee.bus.hw.sio.pending_lines);
-        for line in pending {
+        for line in pending.into_iter().take(20) {
             app.emit("sio-log", line).unwrap_or(());
         }
 
@@ -105,7 +106,7 @@ fn run_cpu_batch(steps: u32, app: tauri::AppHandle, state: State<'_, EmulatorSta
 }
 
 #[tauri::command]
-fn get_framebuffer(state: State<'_, EmulatorState>) -> Result<Vec<u8>, String> {
+fn get_framebuffer(state: State<'_, EmulatorState>) -> Result<tauri::ipc::Response, String> {
     let engine = state.engine.lock().unwrap();
     if let Some(ee) = &*engine {
         let fb = &ee.bus.hw.gs.framebuffer;
@@ -121,7 +122,7 @@ fn get_framebuffer(state: State<'_, EmulatorState>) -> Result<Vec<u8>, String> {
             bytes.push(b);
             bytes.push(a);
         }
-        Ok(bytes)
+        Ok(tauri::ipc::Response::new(bytes))
     } else {
         Err("Emulator not running. Boot a game first.".into())
     }

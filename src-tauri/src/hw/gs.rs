@@ -10,6 +10,7 @@
 
 pub const FB_WIDTH: usize = 640;
 pub const FB_HEIGHT: usize = 448;
+pub const VRAM_SIZE: usize = 4 * 1024 * 1024; // 4MB GS onboard VRAM
 
 // PRIM register primitive types (bits 0-2)
 const PRIM_POINT: u32 = 0;
@@ -24,6 +25,8 @@ const PRIM_SPRITE: u32 = 6;
 struct Vertex {
     x: i32,
     y: i32,
+    u: f32,
+    v: f32,
     color: u32,
 }
 
@@ -59,11 +62,19 @@ pub struct Gs {
     pub test_2: u64,
     pub alpha_1: u64,
     pub alpha_2: u64,
+    pub bitbltbuf: u64,
+    pub trxpos: u64,
+    pub trxreg: u64,
+    pub trxdir: u64,
+
     current_color: u32, // cached 0xAARRGGBB from the last RGBAQ write
+    current_u: f32,
+    current_v: f32,
     prim_type: u32,
     vertex_queue: Vec<Vertex>,
 
     pub framebuffer: Vec<u32>,
+    pub vram: Vec<u8>,
     pub pixels_drawn: u64,
 }
 
@@ -79,7 +90,7 @@ impl Gs {
             display2: 0,
             bgcolor: 0,
             // GS Revision 0x2E in bits 16..24, initial FIELD = 0
-            csr: (0x2Eu64 << 16),
+            csr: 0x2Eu64 << 16,
             imr: 0,
             prim: 0,
             rgbaq: 0,
@@ -99,10 +110,17 @@ impl Gs {
             test_2: 0,
             alpha_1: 0,
             alpha_2: 0,
-            current_color: 0xFF000000,
-            prim_type: PRIM_POINT,
-            vertex_queue: Vec::with_capacity(3),
+            bitbltbuf: 0,
+            trxpos: 0,
+            trxreg: 0,
+            trxdir: 0,
+            current_color: 0xFFFFFFFF,
+            current_u: 0.0,
+            current_v: 0.0,
+            prim_type: 0,
+            vertex_queue: Vec::with_capacity(8),
             framebuffer: vec![0; FB_WIDTH * FB_HEIGHT],
+            vram: vec![0; VRAM_SIZE],
             pixels_drawn: 0,
         }
     }
@@ -169,8 +187,22 @@ impl Gs {
             let nreg = if nreg_raw == 0 { 16 } else { nreg_raw };
             let regs = (tag >> 64) as u64;
 
-            if flg != 0 {
-                // REGLIST/IMAGE modes aren't implemented; skip their payload conservatively.
+            if flg == 2 {
+                // IMAGE mode: raw pixel stream directly into GS VRAM
+                // Target address determined by BITBLTBUF (DBP @ bits 32..46)
+                let dbp = ((self.bitbltbuf >> 32) & 0x3FFF) as usize;
+                let vram_base = dbp * 256;
+                let qwords = nloop as usize;
+                let bytes_to_copy = qwords * 16;
+                let available = data.len().saturating_sub(pos);
+                let copy_len = bytes_to_copy.min(available);
+                if vram_base + copy_len <= self.vram.len() {
+                    self.vram[vram_base..vram_base + copy_len].copy_from_slice(&data[pos..pos + copy_len]);
+                }
+                pos += copy_len;
+                continue;
+            } else if flg != 0 {
+                // REGLIST mode: skip payload conservatively
                 let qwords_to_skip = (nloop as usize).saturating_mul(nreg as usize);
                 pos += qwords_to_skip.saturating_mul(16).min(data.len().saturating_sub(pos));
                 continue;
@@ -202,6 +234,22 @@ impl Gs {
                 let a = ((qword >> 96) & 0xFF) as u32;
                 self.rgbaq = qword as u64;
                 self.current_color = (a << 24) | (r << 16) | (g << 8) | b;
+            }
+            0x02 => {
+                // ST (packed): S @ bits[0:32), T @ bits[32:64), Q @ bits[64:96)
+                let s = f32::from_bits((qword & 0xFFFFFFFF) as u32);
+                let t = f32::from_bits(((qword >> 32) & 0xFFFFFFFF) as u32);
+                let q = f32::from_bits(((qword >> 64) & 0xFFFFFFFF) as u32);
+                let q_denom = if q.abs() > 0.00001 { q } else { 1.0 };
+                self.current_u = s / q_denom;
+                self.current_v = t / q_denom;
+            }
+            0x03 => {
+                // UV (packed): U @ bits[0:16), V @ bits[16:32), 12.4 fixed point
+                let u_fixed = (qword & 0xFFFF) as u32;
+                let v_fixed = ((qword >> 16) & 0xFFFF) as u32;
+                self.current_u = (u_fixed as f32) / 16.0;
+                self.current_v = (v_fixed as f32) / 16.0;
             }
             0x05 | 0x0C | 0x0D => {
                 // XYZ2 / XYZ3 / XYZF3 (packed): X @ bits[0:16), Y @ bits[32:48), 12.4 fixed point
@@ -248,10 +296,14 @@ impl Gs {
                     0x4E => self.zbuf_1 = value,
                     0x4F => self.zbuf_2 = value,
                     0x40..=0x41 => self.scissor_1 = value,
+                    0x50 => self.bitbltbuf = value,
+                    0x51 => self.trxpos = value,
+                    0x52 => self.trxreg = value,
+                    0x53 => self.trxdir = value,
                     _ => {}
                 }
             }
-            _ => {} // NOP, ST/UV/FOG
+            _ => {}
         }
     }
 
@@ -261,10 +313,39 @@ impl Gs {
         self.vertex_queue.clear();
     }
 
+    /// Samples a 32-bit RGBA texel from GS VRAM using the active TEX0_1 context.
+    pub fn sample_texture(&self, u: f32, v: f32) -> u32 {
+        let tbp0 = ((self.tex0_1 & 0x3FFF) as usize) * 256;
+        let tw_exp = (((self.tex0_1 >> 26) & 0xF) as usize).min(11);
+        let th_exp = (((self.tex0_1 >> 30) & 0xF) as usize).min(11);
+        let tw = (1usize << tw_exp).max(1);
+        let th = (1usize << th_exp).max(1);
+
+        let tx = ((u.abs() * tw as f32) as usize) % tw;
+        let ty = ((v.abs() * th as f32) as usize) % th;
+        let offset = tbp0 + (ty * tw + tx) * 4;
+
+        if offset + 4 <= self.vram.len() {
+            let r = self.vram[offset] as u32;
+            let g = self.vram[offset + 1] as u32;
+            let b = self.vram[offset + 2] as u32;
+            let a = self.vram[offset + 3] as u32;
+            (a << 24) | (r << 16) | (g << 8) | b
+        } else {
+            0xFFFFFFFF
+        }
+    }
+
     /// Accepts a newly kicked vertex and rasterizes a primitive once enough
     /// vertices have accumulated, handling strip/fan continuation.
     fn kick_vertex(&mut self, x: i32, y: i32) {
-        self.vertex_queue.push(Vertex { x, y, color: self.current_color });
+        self.vertex_queue.push(Vertex {
+            x,
+            y,
+            u: self.current_u,
+            v: self.current_v,
+            color: self.current_color,
+        });
 
         let needed = match self.prim_type {
             PRIM_POINT => 1,
@@ -346,7 +427,8 @@ impl Gs {
     }
 
     fn draw_triangle(&mut self, a: Vertex, b: Vertex, c: Vertex) {
-        let color = c.color; // flat shading: last vertex's color
+        let textured = (self.prim & (1 << 4)) != 0;
+        let base_color = c.color; // flat shading: last vertex's color
         let min_x = a.x.min(b.x).min(c.x).max(0);
         let max_x = a.x.max(b.x).max(c.x).min(FB_WIDTH as i32 - 1);
         let min_y = a.y.min(b.y).min(c.y).max(0);
@@ -356,6 +438,8 @@ impl Gs {
             (p1.x - p0.x) as i64 * (y - p0.y) as i64 - (p1.y - p0.y) as i64 * (x - p0.x) as i64
         };
 
+        let area = edge(a, b, c.x, c.y).abs().max(1) as f32;
+
         for y in min_y..=max_y {
             for x in min_x..=max_x {
                 let w0 = edge(b, c, x, y);
@@ -363,20 +447,42 @@ impl Gs {
                 let w2 = edge(a, b, x, y);
                 let inside = (w0 >= 0 && w1 >= 0 && w2 >= 0) || (w0 <= 0 && w1 <= 0 && w2 <= 0);
                 if inside {
-                    self.plot_pixel(x, y, color);
+                    if textured {
+                        let l0 = (w0.abs() as f32) / area;
+                        let l1 = (w1.abs() as f32) / area;
+                        let l2 = (w2.abs() as f32) / area;
+                        let u = l0 * a.u + l1 * b.u + l2 * c.u;
+                        let v = l0 * a.v + l1 * b.v + l2 * c.v;
+                        let tex_col = self.sample_texture(u, v);
+                        self.plot_pixel(x, y, tex_col);
+                    } else {
+                        self.plot_pixel(x, y, base_color);
+                    }
                 }
             }
         }
     }
 
     fn draw_sprite(&mut self, a: Vertex, b: Vertex) {
-        // Axis-aligned filled rectangle; per GS convention, only the second vertex's color matters.
         let (x0, x1) = (a.x.min(b.x), a.x.max(b.x));
         let (y0, y1) = (a.y.min(b.y), a.y.max(b.y));
-        let color = b.color;
+        let textured = (self.prim & (1 << 4)) != 0;
+        let base_color = b.color;
+        let width = (x1 - x0).max(1) as f32;
+        let height = (y1 - y0).max(1) as f32;
+
         for y in y0..=y1 {
+            let v_ratio = (y - y0) as f32 / height;
+            let v = a.v + v_ratio * (b.v - a.v);
             for x in x0..=x1 {
-                self.plot_pixel(x, y, color);
+                if textured {
+                    let u_ratio = (x - x0) as f32 / width;
+                    let u = a.u + u_ratio * (b.u - a.u);
+                    let tex_col = self.sample_texture(u, v);
+                    self.plot_pixel(x, y, tex_col);
+                } else {
+                    self.plot_pixel(x, y, base_color);
+                }
             }
         }
     }

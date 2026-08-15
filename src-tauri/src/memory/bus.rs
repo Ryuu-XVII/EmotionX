@@ -7,6 +7,7 @@ pub struct Bus {
     pub ram: Vec<u8>,
     pub bios: &'static [u8], // Baked-in BIOS
     pub hw: Hardware,
+    pub iso: Option<crate::iso9660::Iso9660>,
 }
 
 impl Bus {
@@ -18,7 +19,13 @@ impl Bus {
             ram: vec![0; MAIN_MEMORY_SIZE],
             bios: bios_data,
             hw: Hardware::new(),
+            iso: None,
         }
+    }
+
+    /// Attaches an active disc image reader to the bus for CDVD / FileIO HLE streaming.
+    pub fn attach_iso(&mut self, iso: crate::iso9660::Iso9660) {
+        self.iso = Some(iso);
     }
 
     /// Whether `addr` is backed by real code (RAM or BIOS), as opposed to
@@ -303,8 +310,10 @@ impl Bus {
             self.hw.gs.receive_gif_data(&payload);
         } else if ch == crate::hw::dmac::CH_SIF1 {
             self.handle_sif1_packet(&payload);
+        } else if ch == crate::hw::dmac::CH_VIF1 {
+            self.handle_vif1_packet(&payload);
         }
-        // Other channels: no VIF/IPU/SIF0/SIF2 backend yet, data is simply consumed.
+        // Other channels: no IPU/SIF0/SIF2 backend yet, data is simply consumed.
 
         self.hw.dmac.channels[ch].madr = madr;
         self.hw.dmac.channels[ch].qwc = qwc;
@@ -329,26 +338,189 @@ impl Bus {
     /// sound/CD IOP module behavior is separate, future work.
     fn handle_sif1_packet(&mut self, payload: &[u8]) {
         const SIF_CMD_RPC_BIND: u32 = 0x80000009;
+        const SIF_CMD_RPC_CALL: u32 = 0x8000000A;
         const CD_FIELD_COMMAND_OFFSET: u32 = 16;
         const CD_FIELD_SERVER_OFFSET: u32 = 36;
 
-        if payload.len() < 36 {
+        if payload.len() < 32 {
             return;
         }
         let cid = u32::from_le_bytes(payload[8..12].try_into().unwrap());
-        if cid != SIF_CMD_RPC_BIND {
+
+        if cid == SIF_CMD_RPC_BIND {
+            if payload.len() < 36 {
+                return;
+            }
+            let cd_addr = u32::from_le_bytes(payload[28..32].try_into().unwrap());
+            if cd_addr == 0 {
+                return;
+            }
+            // SifRpcClientData_t.server: NULL until bind completes: games poll/wait on this.
+            self.write32(cd_addr + CD_FIELD_SERVER_OFFSET, 0xBAD00001);
+            self.write32(cd_addr + CD_FIELD_COMMAND_OFFSET, 0);
             return;
         }
 
-        let cd_addr = u32::from_le_bytes(payload[28..32].try_into().unwrap());
-        if cd_addr == 0 {
-            return;
+        if cid == SIF_CMD_RPC_CALL {
+            if payload.len() < 52 {
+                return;
+            }
+            let rpc_id = u32::from_le_bytes(payload[24..28].try_into().unwrap());
+            let client_addr = u32::from_le_bytes(payload[28..32].try_into().unwrap());
+            let send_addr = u32::from_le_bytes(payload[32..36].try_into().unwrap());
+            let send_size = u32::from_le_bytes(payload[36..40].try_into().unwrap());
+            let recv_addr = u32::from_le_bytes(payload[40..44].try_into().unwrap());
+            let recv_size = u32::from_le_bytes(payload[44..48].try_into().unwrap());
+
+            self.handle_sif_rpc_call(rpc_id, client_addr, send_addr, send_size, recv_addr, recv_size);
         }
-        // SifRpcClientData_t.server: NULL until bind completes: games poll/wait on this.
-        // The exact value is unobservable to correct game code (only nullness is checked),
-        // so a recognizably-fake sentinel is used rather than a real memory address.
-        self.write32(cd_addr + CD_FIELD_SERVER_OFFSET, 0xBAD00001);
-        self.write32(cd_addr + CD_FIELD_COMMAND_OFFSET, 0);
+    }
+
+    /// Handles High-Level Emulated (HLE) SIF RPC calls, including CDVD and FileIO disc reads.
+    fn handle_sif_rpc_call(
+        &mut self,
+        rpc_id: u32,
+        client_addr: u32,
+        send_addr: u32,
+        _send_size: u32,
+        recv_addr: u32,
+        _recv_size: u32,
+    ) {
+        const CD_FIELD_COMMAND_OFFSET: u32 = 16;
+        const CD_FIELD_BUFF_OFFSET: u32 = 20;
+
+        match rpc_id {
+            // CDVD Read (sceCdRead / sceCdReadDVD / sceCdReadCD / N-command read)
+            1 | 2 | 3 => {
+                if send_addr != 0 {
+                    let lba = self.read32(send_addr);
+                    let sectors = self.read32(send_addr + 4);
+                    let dest_buf = self.read32(send_addr + 8);
+
+                    if let Some(mut iso) = self.iso.take() {
+                        let total_bytes = (sectors as usize) * 2048;
+                        let mut temp = vec![0u8; total_bytes];
+                        if iso.read_sectors(lba, sectors, &mut temp).is_ok() {
+                            let phys_dst = (dest_buf & 0x1FFFFFFF) as usize;
+                            if phys_dst + total_bytes <= self.ram.len() {
+                                self.ram[phys_dst..phys_dst + total_bytes].copy_from_slice(&temp);
+                            }
+                        }
+                        self.iso = Some(iso);
+                    }
+                }
+                if recv_addr != 0 {
+                    self.write32(recv_addr, 1); // 1 = success
+                }
+            },
+            // CDVD SearchFile (sceCdSearchFile)
+            10 => {
+                if send_addr != 0 {
+                    let path = self.read_string(send_addr);
+                    let clean_path = path.trim_start_matches(|c| c == '\\' || c == '/');
+                    let clean_path = clean_path.strip_prefix("cdrom0:").unwrap_or(clean_path);
+                    let clean_path = clean_path.strip_prefix("cdrom:").unwrap_or(clean_path);
+                    let clean_path = clean_path.trim_start_matches(|c| c == '\\' || c == '/');
+
+                    if let Some(mut iso) = self.iso.take() {
+                        if let Ok((lba, size)) = iso.find_file_info(clean_path) {
+                            if recv_addr != 0 {
+                                // sceCdlFILE struct layout (32 bytes):
+                                // offset 0: lba (u32), offset 4: size (u32), offset 8..24: name (16 bytes)
+                                self.write32(recv_addr, lba);
+                                self.write32(recv_addr + 4, size);
+                                for (i, b) in clean_path.as_bytes().iter().take(15).enumerate() {
+                                    self.write8(recv_addr + 8 + (i as u32), *b);
+                                }
+                                self.write8(recv_addr + 8 + 15, 0);
+                            }
+                        }
+                        self.iso = Some(iso);
+                    }
+                }
+                if recv_addr != 0 {
+                    self.write32(recv_addr, 1);
+                }
+            },
+            // CDVD DiskReady / GetDiskType / GetTrayStatus / Status
+            4 | 5 | 6 => {
+                if recv_addr != 0 {
+                    self.write32(recv_addr, 0x14); // 0x14 = PS2 DVD
+                }
+            },
+            // PAD Init / Open / Read / GetState / InfoMode (DualShock 2 HLE)
+            0x0100 | 0x0101 | 0x80000100 | 0x80000101 => {
+                if recv_addr != 0 {
+                    // Standard DualShock 2 response: status=OK, id=0x73, buttons=0xFFFF (unpressed), analog=128
+                    self.write8(recv_addr, 0x00);
+                    self.write8(recv_addr + 1, 0x73);
+                    self.write8(recv_addr + 2, 0xFF);
+                    self.write8(recv_addr + 3, 0xFF);
+                    self.write8(recv_addr + 4, 128);
+                    self.write8(recv_addr + 5, 128);
+                    self.write8(recv_addr + 6, 128);
+                    self.write8(recv_addr + 7, 128);
+                }
+            },
+            // Default / Other RPC calls
+            _ => {
+                if recv_addr != 0 {
+                    self.write32(recv_addr, 0);
+                }
+            }
+        }
+
+        // Signal RPC completion in SifRpcClientData_t
+        if client_addr != 0 {
+            self.write32(client_addr + CD_FIELD_COMMAND_OFFSET, 0); // command = 0 (completed)
+            if recv_addr == 0 {
+                let buff_ptr = self.read32(client_addr + CD_FIELD_BUFF_OFFSET);
+                if buff_ptr != 0 {
+                    self.write32(buff_ptr, 1);
+                }
+            }
+        }
+    }
+
+    /// Handles VIF1 DMA packets, passing DIRECT commands straight through into the GS.
+    fn handle_vif1_packet(&mut self, payload: &[u8]) {
+        let mut pos = 0usize;
+        while pos + 4 <= payload.len() {
+            let cmd_word = u32::from_le_bytes(payload[pos..pos + 4].try_into().unwrap());
+            let imm = (cmd_word & 0xFFFF) as usize;
+            let num = ((cmd_word >> 16) & 0xFF) as usize;
+            let cmd = ((cmd_word >> 24) & 0x7F) as u8;
+            pos += 4;
+
+            match cmd {
+                0x00 => {
+                    // NOP
+                },
+                0x50 => {
+                    // DIRECT: imm specifies the number of QWORDS passed straight to GIF
+                    let qwords = if imm == 0 { 65536 } else { imm };
+                    let bytes = qwords * 16;
+                    let end = (pos + bytes).min(payload.len());
+                    if pos < end {
+                        self.hw.gs.receive_gif_data(&payload[pos..end]);
+                    }
+                    pos = end;
+                },
+                0x10 | 0x11 | 0x13 | 0x14 | 0x17 => {
+                    // FLUSH / MSCAL
+                },
+                0x60..=0x7F => {
+                    // UNPACK: skip payload
+                    let vl = (cmd & 0x3) as usize;
+                    let vn = ((cmd >> 2) & 0x3) as usize;
+                    let size_table = [4, 2, 1, 0];
+                    let elem_size = size_table[vl] * (vn + 1);
+                    let total_bytes = (num * elem_size + 3) & !3;
+                    pos = (pos + total_bytes).min(payload.len());
+                },
+                _ => {}
+            }
+        }
     }
 
     /// Reads a null-terminated string from memory starting at the given address.

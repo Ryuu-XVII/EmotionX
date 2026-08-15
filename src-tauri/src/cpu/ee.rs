@@ -143,8 +143,9 @@ impl EmotionEngine {
     /// Fetches the next instruction from memory at the current PC, decodes it,
     /// executes it, and advances the PC. Returns a string representation of the executed instruction.
     pub fn step(&mut self) -> String {
-        // Increment COP0 count
+        // Increment COP0 count & hardware timers
         self.cop0.count = self.cop0.count.wrapping_add(1);
+        self.bus.hw.timers.tick(1);
         if self.cop0.count == self.cop0.compare {
             self.cop0.cause |= 1 << 15; // Set IP7
         }
@@ -171,12 +172,6 @@ impl EmotionEngine {
         let erl = (status & 4) != 0;
         let im = (status >> 8) & 0xFF; // Interrupt Mask
         let ip = (cause >> 8) & 0xFF;  // Interrupt Pending
-        
-        if self.cop0.count % 100_000 == 1 {
-            let debug_log = format!("DEBUG INT: PC={:#010X} IE={} EXL={} ERL={} IP={:#010b} IM={:#010b} STATUS={:#010X} CAUSE={:#010X}", 
-                     self.current_pc, ie, exl, erl, ip, im, status, cause);
-            self.bus.hw.sio.pending_lines.push(debug_log);
-        }
 
         if ie && !exl && !erl && (ip & im) != 0 {
             // For external interrupts, the EPC is the instruction we were ABOUT to execute (self.pc).
@@ -631,12 +626,16 @@ impl EmotionEngine {
                         if funct == 0b011000 {
                             // ERET
                             log.push_str("ERET");
-                            // Set PC to EPC
-                            self.next_pc = self.cop0.epc;
+                            if (self.cop0.status & (1 << 2)) != 0 {
+                                // Status.ERL == 1: Return from Error exception to ErrorEPC
+                                self.next_pc = self.cop0.error_epc;
+                                self.cop0.status &= !(1 << 2); // Clear ERL
+                            } else {
+                                // Status.ERL == 0: Return from normal exception/syscall to EPC
+                                self.next_pc = self.cop0.epc;
+                                self.cop0.status &= !(1 << 1); // Clear EXL
+                            }
                             self.branch = true;
-                            
-                            // Restore Status register flags (simplified for now)
-                            self.cop0.status &= !(1 << 1); // Clear EXL
                         } else {
                             log.push_str(&format!("UNKNOWN COP0 CO: {:#08b}", funct));
                         }
@@ -1422,48 +1421,56 @@ impl EmotionEngine {
                 self.set_reg(2, 0);
             },
             // INTC / DMAC Handler management
-            0x10 => {
+            // INTC Handlers & Interrupt Control
+            0x10 | 0x80 | 0x82 => {
                 // AddIntcHandler(cause, handler, next, arg)
                 let id = self.next_handler_id;
                 self.next_handler_id += 1;
-                log.push_str(&format!(" [HLE Syscall 0x10: AddIntcHandler -> id {}]", id));
+                log.push_str(&format!(" [HLE Syscall {:#04X}: AddIntcHandler -> id {}]", syscall_id, id));
                 self.set_reg(2, id as u64);
             },
-            0x11 => {
+            0x11 | 0x81 => {
                 // RemoveIntcHandler(cause, id)
-                log.push_str(" [HLE Syscall 0x11: RemoveIntcHandler]");
+                log.push_str(&format!(" [HLE Syscall {:#04X}: RemoveIntcHandler]", syscall_id));
                 self.set_reg(2, 0);
             },
             0x12 => {
-                // EnableIntc(cause)
+                // EnableIntc(cause) -> returns previous mask (0)
                 log.push_str(" [HLE Syscall 0x12: EnableIntc]");
                 self.set_reg(2, 0);
             },
-            0x13 => {
-                // DisableIntc(cause)
-                log.push_str(" [HLE Syscall 0x13: DisableIntc]");
+            0x83 => {
+                // _iEnableIntc / Runtime iterator helper: returns $a0 (the input pointer/mask)
+                let a0 = self.get_reg(4);
+                log.push_str(&format!(" [HLE Syscall 0x83 -> {:#010X}]", a0));
+                self.set_reg(2, a0);
+            },
+            0x13 | 0x84 => {
+                // DisableIntc / _iDisableIntc(cause) -> returns previous mask (0)
+                log.push_str(&format!(" [HLE Syscall {:#04X}: DisableIntc]", syscall_id));
                 self.set_reg(2, 0);
             },
-            0x14 => {
+            // DMAC Handlers & DMA Control
+            0x14 | 0x86 => {
                 // AddDmacHandler(channel, handler, next, arg)
                 let id = self.next_handler_id;
                 self.next_handler_id += 1;
-                log.push_str(&format!(" [HLE Syscall 0x14: AddDmacHandler -> id {}]", id));
+                log.push_str(&format!(" [HLE Syscall {:#04X}: AddDmacHandler -> id {}]", syscall_id, id));
                 self.set_reg(2, id as u64);
             },
-            0x15 => {
+            0x15 | 0x87 => {
                 // RemoveDmacHandler(channel, id)
-                log.push_str(" [HLE Syscall 0x15: RemoveDmacHandler]");
+                log.push_str(&format!(" [HLE Syscall {:#04X}: RemoveDmacHandler]", syscall_id));
                 self.set_reg(2, 0);
             },
-            0x16 => {
-                // EnableDmac(channel)
-                log.push_str(" [HLE Syscall 0x16: EnableDmac]");
+            0x16 | 0x88 => {
+                // EnableDmac / _iEnableDmac(channel)
+                log.push_str(&format!(" [HLE Syscall {:#04X}: EnableDmac]", syscall_id));
                 self.set_reg(2, 0);
             },
-            0x17 => {
-                // DisableDmac(channel)
-                log.push_str(" [HLE Syscall 0x17: DisableDmac]");
+            0x17 | 0x89 => {
+                // DisableDmac / _iDisableDmac(channel)
+                log.push_str(&format!(" [HLE Syscall {:#04X}: DisableDmac]", syscall_id));
                 self.set_reg(2, 0);
             },
             // Thread management
@@ -1489,22 +1496,29 @@ impl EmotionEngine {
                 log.push_str(" [HLE Syscall 0x24: ExitDeleteThread]");
                 self.set_reg(2, 0);
             },
-            0x29 => {
-                // RotateThreadReadyQueue(priority)
-                log.push_str(" [HLE Syscall 0x29: RotateThreadReadyQueue]");
+            0x29 | 0x79 => {
+                // RotateThreadReadyQueue / _iRotateThreadReadyQueue(priority)
+                log.push_str(" [HLE Syscall: RotateThreadReadyQueue]");
                 self.set_reg(2, 0);
             },
+            0x3C => {
+                // InitMainThread(gp, stack_top, stack_size, args, root) -> returns initial stack pointer
+                let stack_top = self.get_reg(5);
+                let sp = if stack_top != 0 { stack_top } else { 0x81FFFFF0 };
+                log.push_str(&format!(" [HLE Syscall 0x3C: InitMainThread -> SP {:#010X}]", sp));
+                self.set_reg(2, sp);
+            },
             // Alarm management
-            0x2C => {
-                // SetAlarm(time, callback, arg)
+            0x2C | 0x7A => {
+                // SetAlarm / _iSetAlarm(time, callback, arg)
                 let id = self.next_handler_id;
                 self.next_handler_id += 1;
-                log.push_str(&format!(" [HLE Syscall 0x2C: SetAlarm -> id {}]", id));
+                log.push_str(&format!(" [HLE Syscall: SetAlarm -> id {}]", id));
                 self.set_reg(2, id as u64);
             },
-            0x2D => {
-                // ReleaseAlarm(id)
-                log.push_str(" [HLE Syscall 0x2D: ReleaseAlarm]");
+            0x2D | 0x7B => {
+                // ReleaseAlarm / _iReleaseAlarm(id)
+                log.push_str(" [HLE Syscall: ReleaseAlarm]");
                 self.set_reg(2, 0);
             },
             0x3D => {
@@ -1520,13 +1534,7 @@ impl EmotionEngine {
                 log.push_str(&format!(" [HLE Syscall 0x3E: Puts (\"{}\")]", s));
                 self.set_reg(2, 0);
             },
-            // Kernel semaphore syscalls. We have no real thread scheduler, so there's no
-            // meaningful way to actually block a thread on WaitSema - instead every one of
-            // these succeeds immediately, which is a safe simplification (never deadlocks)
-            // at the cost of not modeling real inter-thread synchronization. This is what
-            // lets synchronous SIF RPC binds (sceSifBindRpc etc., which wait on a semaphore
-            // signaled by the SIF response) proceed once the DMAC's SIF1 bind handler below
-            // has already written a fake-but-plausible response into the client struct.
+            // Kernel semaphore syscalls
             0x40 => {
                 // CreateSema
                 let id = self.next_sema_id;
@@ -1539,13 +1547,13 @@ impl EmotionEngine {
                 log.push_str(" [HLE Syscall 0x41: DeleteSema]");
                 self.set_reg(2, 0);
             },
-            0x42 => {
-                // SignalSema
-                log.push_str(" [HLE Syscall 0x42: SignalSema]");
+            0x42 | 0x7E => {
+                // SignalSema / _iSignalSema
+                log.push_str(" [HLE Syscall: SignalSema]");
                 self.set_reg(2, 0);
             },
             0x44 => {
-                // WaitSema - always succeeds immediately, see note above
+                // WaitSema - always succeeds immediately
                 log.push_str(" [HLE Syscall 0x44: WaitSema]");
                 self.set_reg(2, 0);
             },
@@ -1557,6 +1565,36 @@ impl EmotionEngine {
             0x47 => {
                 // ReferSemaStatus
                 log.push_str(" [HLE Syscall 0x47: ReferSemaStatus]");
+                self.set_reg(2, 0);
+            },
+            0x64 => {
+                // FlushCache(mode)
+                log.push_str(" [HLE Syscall 0x64: FlushCache]");
+                self.set_reg(2, 0);
+            },
+            0x68 => {
+                // CpuConfig(flags)
+                log.push_str(" [HLE Syscall 0x68: CpuConfig]");
+                self.set_reg(2, 0);
+            },
+            0x71 => {
+                // GetMemorySize() -> 32MB
+                log.push_str(" [HLE Syscall 0x71: GetMemorySize -> 32MB]");
+                self.set_reg(2, 32 * 1024 * 1024);
+            },
+            0x74 => {
+                // GetGsConfig()
+                log.push_str(" [HLE Syscall 0x74: GetGsConfig]");
+                self.set_reg(2, 0);
+            },
+            0x76 => {
+                // WakeupThread / _iWakeupThread(id)
+                log.push_str(" [HLE Syscall 0x76: WakeupThread]");
+                self.set_reg(2, 0);
+            },
+            0x78 => {
+                // CancelWakeupThread / _iCancelWakeupThread(id)
+                log.push_str(" [HLE Syscall 0x78: CancelWakeupThread]");
                 self.set_reg(2, 0);
             },
             0x7C => {
@@ -1572,7 +1610,7 @@ impl EmotionEngine {
                 self.set_reg(2, 0);
             },
             _ => {
-                // Unimplemented Syscall - Per user feedback, log warning and return 0
+                // Unimplemented Syscall - Return 0
                 log.push_str(&format!(" [HLE Syscall {:#04X}: UNIMPLEMENTED - Returning 0]", syscall_id));
                 self.set_reg(2, 0);
             }
@@ -2916,5 +2954,239 @@ mod tests {
 
         assert_eq!(ee.bus.hw.gs.tex0_1, 0x00100000_12345678);
         assert_eq!(ee.bus.hw.gs.alpha_1, 0x44);
+    }
+
+    #[test]
+    fn test_dma_gif_image_upload_and_textured_sprite() {
+        let mut ee = EmotionEngine::new(crate::memory::bus::Bus::new());
+
+        // Step 1: Upload 1 quadword (4 pixels) of texture data to VRAM DBP=0 via IMAGE mode (FLG=2)
+        // BITBLTBUF DBP=0
+        ee.bus.hw.gs.bitbltbuf = 0;
+        let image_tag: u128 = 1 | (2u128 << 58); // NLOOP=1, FLG=2 (IMAGE)
+        let pixel_data: u128 = 0xAA112233_BB445566_CC778899_DDAABBCCu128;
+
+        ee.bus.write128(0x3000, image_tag);
+        ee.bus.write128(0x3010, pixel_data);
+
+        // Kick GIF DMA (channel 2) for 2 quadwords
+        ee.bus.write32(0x1000A010, 0x3000);
+        ee.bus.write32(0x1000A020, 2);
+        ee.bus.write32(0x1000A000, 0x100);
+
+        // Assert pixel data made it into VRAM at offset 0
+        assert_eq!(ee.bus.hw.gs.vram[0..16], pixel_data.to_le_bytes());
+
+        // Step 2: Draw a textured sprite using this texture
+        // Set TEX0_1: TBP0=0, TW=2 (width 4), TH=0 (height 1)
+        let tex0: u64 = 0 | (2 << 26) | (0 << 30);
+        ee.bus.hw.gs.tex0_1 = tex0;
+
+        // PACKED mode drawing: PRIM(SPRITE | TME = 0x16), UV1, XYZ2_1, UV2, XYZ2_2
+        let nloop: u128 = 1;
+        let nreg: u128 = 5;
+        let regs: u128 = 0x0E | (0x03 << 4) | (0x05 << 8) | (0x03 << 12) | (0x05 << 16);
+        let draw_tag = nloop | (nreg << 60) | (regs << 64);
+
+        let prim_val: u128 = 0x16 | (0x00u128 << 64); // PRIM = SPRITE | TME (0x16) via A+D (0x00)
+        let uv1: u128 = 0; // (0,0)
+        let xyz1: u128 = (10u128 << 4) | ((20u128 << 4) << 32); // (10, 20)
+        let uv2: u128 = 0;
+        let xyz2: u128 = (12u128 << 4) | ((22u128 << 4) << 32); // (12, 22)
+
+        ee.bus.write128(0x3100, draw_tag);
+        ee.bus.write128(0x3110, prim_val);
+        ee.bus.write128(0x3120, uv1);
+        ee.bus.write128(0x3130, xyz1);
+        ee.bus.write128(0x3140, uv2);
+        ee.bus.write128(0x3150, xyz2);
+
+        // Kick GIF DMA
+        ee.bus.write32(0x1000A010, 0x3100);
+        ee.bus.write32(0x1000A020, 6);
+        ee.bus.write32(0x1000A000, 0x100);
+
+        // Assert pixel (10, 20) sampled from VRAM texel 0
+        let drawn_pixel = ee.bus.hw.gs.framebuffer[20 * crate::hw::gs::FB_WIDTH + 10];
+        assert_ne!(drawn_pixel, 0, "Textured sprite should draw into framebuffer");
+    }
+
+    #[test]
+    fn test_sif_rpc_call_cdsearchfile_and_read() {
+        let mut ee = EmotionEngine::new(crate::memory::bus::Bus::new());
+
+        // Create a temporary synthetic ISO image
+        let temp_dir = std::env::temp_dir();
+        let iso_path = temp_dir.join("test_sif_rpc.iso");
+        let dummy_payload = b"PS2_EMU_TEST_DATA_SECTOR_PAYLOAD";
+        {
+            use std::fs::File;
+            use std::io::Write;
+            let mut file = File::create(&iso_path).unwrap();
+            // 16 unused sectors + PVD + Root dir + SYSTEM.CNF + TEST.ELF
+            let mut all_data = vec![0u8; 19 * 2048];
+            all_data[16 * 2048 + 1..16 * 2048 + 6].copy_from_slice(b"CD001");
+            // Write payload at sector 18
+            all_data[18 * 2048..18 * 2048 + dummy_payload.len()].copy_from_slice(dummy_payload);
+            file.write_all(&all_data).unwrap();
+        }
+
+        let iso = crate::iso9660::Iso9660::open(iso_path.to_str().unwrap()).unwrap();
+        ee.bus.attach_iso(iso);
+
+        // 1. Test CDVD Read RPC (rpc_id = 1)
+        // Setup send buffer at 0x6000: lba=18, sectors=1, dest_buf=0x00200000
+        ee.bus.write32(0x6000, 18);          // lba
+        ee.bus.write32(0x6004, 1);           // sectors
+        ee.bus.write32(0x6008, 0x00200000);  // dest_buf
+
+        // Setup SifRpcClientData at 0x5000: command=1
+        ee.bus.write32(0x5010, 1); // command (offset 16)
+
+        // Setup SifRpcCallPkt at 0x7000:
+        // offset 8: cid = 0x8000000A (SIF_CMD_RPC_CALL)
+        // offset 24: rpc_id = 1 (CDVD_READ)
+        // offset 28: client = 0x5000
+        // offset 32: send_addr = 0x6000
+        // offset 36: send_size = 12
+        // offset 40: recv_addr = 0x6100
+        // offset 44: recv_size = 4
+        ee.bus.write32(0x7008, 0x8000000A);
+        ee.bus.write32(0x7018, 1);
+        ee.bus.write32(0x701C, 0x5000);
+        ee.bus.write32(0x7020, 0x6000);
+        ee.bus.write32(0x7024, 12);
+        ee.bus.write32(0x7028, 0x6100);
+        ee.bus.write32(0x702C, 4);
+
+        // Kick SIF1 DMA (channel 6: D6_MADR=0x7000, D6_QWC=4, D6_CHCR=0x100)
+        ee.bus.write32(0x1000C410, 0x7000);
+        ee.bus.write32(0x1000C420, 4);
+        ee.bus.write32(0x1000C400, 0x100);
+
+        // Assert client.command was cleared to 0 (RPC complete)
+        assert_eq!(ee.bus.read32(0x5010), 0, "Client command should be 0 on RPC completion");
+        // Assert recv buffer has 1 (success)
+        assert_eq!(ee.bus.read32(0x6100), 1, "Recv buffer should be 1 (success)");
+
+        // Assert payload was copied into EE RAM at 0x00200000
+        let mut read_back = [0u8; 32];
+        for (i, byte) in read_back.iter_mut().enumerate() {
+            *byte = ee.bus.read8(0x00200000 + i as u32);
+        }
+        assert_eq!(&read_back[..dummy_payload.len()], dummy_payload);
+
+        let _ = std::fs::remove_file(&iso_path);
+    }
+
+    #[test]
+    fn test_sif_rpc_call_disk_status() {
+        let mut ee = EmotionEngine::new(crate::memory::bus::Bus::new());
+
+        // Setup SifRpcClientData at 0x5000: command=1
+        ee.bus.write32(0x5010, 1);
+
+        // SifRpcCallPkt at 0x7000: rpc_id = 4 (GetDiskType), recv = 0x6200
+        ee.bus.write32(0x7008, 0x8000000A);
+        ee.bus.write32(0x7018, 4);
+        ee.bus.write32(0x701C, 0x5000);
+        ee.bus.write32(0x7020, 0);
+        ee.bus.write32(0x7028, 0x6200);
+
+        // Kick SIF1 DMA
+        ee.bus.write32(0x1000C410, 0x7000);
+        ee.bus.write32(0x1000C420, 4);
+        ee.bus.write32(0x1000C400, 0x100);
+
+        assert_eq!(ee.bus.read32(0x5010), 0);
+        assert_eq!(ee.bus.read32(0x6200), 0x14, "Disk type should report 0x14 (PS2 DVD)");
+    }
+
+    #[test]
+    fn test_dma_vif1_direct_plots_pixel() {
+        let mut ee = EmotionEngine::new(crate::memory::bus::Bus::new());
+
+        // Build a VIF1 packet with DIRECT command (0x50):
+        // 32-bit VIFtag at 0x4000: imm=2 (2 quadwords follow), cmd=0x50 (DIRECT)
+        let vif_direct = (0x50u32 << 24) | 3;
+        ee.bus.write32(0x4000, vif_direct);
+
+        // 3 Quadwords of GIF packet at 0x4004 (tag + 2 packed registers):
+        let nloop: u128 = 1;
+        let nreg: u128 = 2;
+        let regs: u128 = 0x0E | (0x05 << 4);
+        let tag = nloop | (nreg << 60) | (regs << 64);
+        let rgbaq_ad: u128 = 0x8000FF00 | (0x01u128 << 64); // Green pixel
+        let xyz_qword: u128 = (150u128 << 4) | ((80u128 << 4) << 32); // (150, 80)
+
+        // Write contiguous payload: 4 bytes tag + 48 bytes GIF data
+        let mut payload = Vec::new();
+        payload.extend_from_slice(&vif_direct.to_le_bytes());
+        payload.extend_from_slice(&tag.to_le_bytes());
+        payload.extend_from_slice(&rgbaq_ad.to_le_bytes());
+        payload.extend_from_slice(&xyz_qword.to_le_bytes());
+
+        for (i, b) in payload.iter().enumerate() {
+            ee.bus.write8(0x4000 + i as u32, *b);
+        }
+
+        // Kick VIF1 DMA (channel 1, base 0x10009000):
+        ee.bus.write32(0x10009010, 0x4000); // D1_MADR
+        ee.bus.write32(0x10009020, 4);      // D1_QWC
+        ee.bus.write32(0x10009000, 0x100);  // D1_CHCR: STR set
+
+        assert_eq!(ee.bus.hw.gs.pixels_drawn, 1);
+        assert_eq!(ee.bus.hw.gs.framebuffer[80 * crate::hw::gs::FB_WIDTH + 150], 0x8000FF00);
+    }
+
+    #[test]
+    fn test_sif_rpc_call_pad_read() {
+        let mut ee = EmotionEngine::new(crate::memory::bus::Bus::new());
+
+        // Setup SifRpcClientData at 0x5000: command=1
+        ee.bus.write32(0x5010, 1);
+
+        // SifRpcCallPkt at 0x7000: rpc_id = 0x0100 (PAD_READ), recv = 0x6300
+        ee.bus.write32(0x7008, 0x8000000A);
+        ee.bus.write32(0x7018, 0x0100);
+        ee.bus.write32(0x701C, 0x5000);
+        ee.bus.write32(0x7020, 0);
+        ee.bus.write32(0x7028, 0x6300);
+
+        // Kick SIF1 DMA
+        ee.bus.write32(0x1000C410, 0x7000);
+        ee.bus.write32(0x1000C420, 4);
+        ee.bus.write32(0x1000C400, 0x100);
+
+        assert_eq!(ee.bus.read32(0x5010), 0);
+        assert_eq!(ee.bus.read8(0x6300), 0x00, "PAD status should be OK (0x00)");
+        assert_eq!(ee.bus.read8(0x6301), 0x73, "PAD ID should be DualShock 2 (0x73)");
+        assert_eq!(ee.bus.read8(0x6302), 0xFF, "PAD buttons byte 0 should be 0xFF (unpressed)");
+        assert_eq!(ee.bus.read8(0x6304), 128, "PAD analog axis should be 128 (centered)");
+    }
+
+    #[test]
+    fn test_nfs_boot_trace() {
+        let chd_path = r"C:\Users\adnaa\OneDrive\Documents\PS2 GAMES\Need for Speed - Most Wanted - Black Edition (USA).chd";
+        if !std::path::Path::new(chd_path).exists() {
+            return;
+        }
+
+        let mut ee = EmotionEngine::new(crate::memory::bus::Bus::new());
+        let mut iso = crate::iso9660::Iso9660::open(chd_path).unwrap();
+        let system_cnf = iso.read_file("SYSTEM.CNF").unwrap();
+        let boot_path = crate::iso9660::parse_boot_path(&system_cnf).unwrap();
+        let elf_bytes = iso.read_file(&boot_path).unwrap();
+        let entry = crate::elf_loader::load_elf_bytes(&elf_bytes, &mut ee).unwrap();
+        ee.set_pc(entry);
+        ee.bus.attach_iso(iso);
+
+        println!("NFS Entry PC: {:#010X}", ee.pc);
+        for i in 0..100000 {
+            ee.step();
+            if ee.pc < 0x100000 {
+                panic!("PC jumped to low address at step {}! Registers: $ra={:#010X}, $sp={:#018X}", i, ee.get_reg(31), ee.get_reg(29));
+            }
+        }
     }
 }

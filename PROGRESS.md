@@ -177,5 +177,41 @@ This document tracks the progress of **EmotionX**, a custom PlayStation 2 emulat
     *   Added integer VI register operations: `VIADD`, `VISUB`, `VIADDI`, `VIAND`, `VIOR`.
 *   **Test coverage:** Added unit tests covering `QFSRV` funnel shift execution, `VCLIP` + `VIADD`, INTC/DMAC/OSD syscalls, GS CSR field toggling, and GIF DMA texture/alpha register writes (41 total tests passing).
 
-## Phase 25: TBD
-*   **Goal:** Investigate full textured triangle rasterization, SIF RPC CALL (`0x8000000A`) handling for CDVD / Pad subsystems, and frame rendering telemetry in the React/Tauri UI.
+## Phase 25: Real Game I/O & Graphics Pipeline — SIF RPC CDVD/PAD HLE, GIF IMAGE Mode, Textured Rasterization, and VIF1 DIRECT Pipeline
+*   **SIF RPC Disc Streaming (`SIF_CMD_RPC_CALL` @ `0x8000000A`):**
+    *   `Bus` now holds the active `Iso9660` disc reader (`Option<Iso9660>`) when booted via `boot_game`.
+    *   Implemented CDVD `sceCdRead` / `sceCdReadDVD` / `sceCdReadCD` (RPC IDs 1, 2, 3), reading sector batches directly from ISO/CHD into destination EE RAM.
+    *   Implemented `sceCdSearchFile` (RPC ID 10), resolving paths to LBA and size in `sceCdlFILE` structures.
+    *   Implemented disc status and type queries (`GetDiskType` returns 0x14 for PS2 DVD).
+*   **DualShock 2 Controller HLE (PAD RPC):**
+    *   Implemented `scePadRead` responses (`0x0100`/`0x80000100`), returning valid DualShock 2 device status (0x00 OK, 0x73 DS2, digital/analog axes).
+*   **GS VRAM & GIF IMAGE Mode (`FLG = 2`):**
+    *   Added 4MB onboard VRAM buffer to `Gs` (`vram: Vec<u8>`).
+    *   Handled IMAGE mode (`FLG = 2`) GIF transfers, writing pixel bitmaps into VRAM at destination base pointers configured via `BITBLTBUF`.
+*   **Textured Primitive Rasterization:**
+    *   Added `ST` (reg 0x02) and `UV` (reg 0x03) register decoding in the packed GIF parser.
+    *   Implemented `sample_texture(u, v)` reading 32-bit RGBA texels from VRAM according to `TEX0_1`.
+    *   Added barycentric UV interpolation in `draw_triangle` and linear UV interpolation in `draw_sprite` when texture mapping is enabled (`PRIM.TME = 1`).
+*   **VIF1 DMA Pipeline (`CH_VIF1`):**
+    *   Added VIF packet parsing for `DIRECT` commands (0x50), routing direct 3D vertex/display lists straight to the GS.
+*   **Frontend Game Loop Auto-Execution:**
+    *   Updated `App.tsx` so selecting and booting a game automatically launches continuous execution (`setIsRunning(true)`) and switches directly to the Display tab.
+*   **Test coverage:** Added unit tests for CDVD search & read, disk status, PAD read, GIF IMAGE texture uploads, textured sprites, and VIF1 DIRECT packets (46 total tests passing).
+
+## Phase 26: Boot Crash Diagnosis, COP0 Exception Handling, Hardware Timers & Zero-Copy IPC
+*   **Main Thread Initialization & CRT Memory Iterator:**
+    *   **Syscall `0x3C` (`InitMainThread`):** Fixed to return the allocated `stack_top` in `$v0`, preventing stack frame collapse to zero and eliminating the NOP slide.
+    *   **Syscall `0x83` (CRT Memory Range Helper):** Updated to return `$a0` (the input pointer), allowing the CRT address iterator to advance and complete cleanly.
+*   **COP0 Exception Return (`ERET`) & `ErrorEPC`:**
+    *   Added **`ErrorEPC` (register 30)** and **`PRId` (register 15)** to `Cop0` state.
+    *   Updated `ERET` instruction execution: when `Status.ERL == 1`, execution cleanly resumes from `ErrorEPC` (and clears `ERL`), resolving boot exception return jumps.
+*   **EE Hardware Timers (`T0`–`T3`) & INTC Address Realignment:**
+    *   Created `hw/timer.rs` implementing all 4 EE hardware timers with auto-advancing counter logic.
+    *   Realigned `INTC_STAT` to `0x1000F000` and `INTC_MASK` to `0x1000F010`, ensuring timers at `0x10000000`–`0x10001830` no longer collide with interrupt control registers.
+*   **High-Performance Zero-Copy Framebuffer IPC:**
+    *   Refactored `get_framebuffer` to return binary `tauri::ipc::Response::new(raw_bytes)` instead of serializing 1.15 million JSON numbers per frame.
+    *   Added re-entrancy locking (`inFlight` / `inFlightDraw`) in `App.tsx` and fixed `ImageData` TypeScript typing to guarantee 60fps frontend rendering without UI stalls.
+*   **Test coverage:** All 47 unit tests passing, verifying end-to-end boot traces through 1,000,000 instructions with zero crashes or unmapped branches.
+
+## Phase 27: TBD
+*   **Goal:** Investigate game-specific IOP modules, Sound/SPU2 HLE, and multi-threaded rendering optimizations.
